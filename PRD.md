@@ -127,6 +127,7 @@ HTTPCraft MCP acts as a thin wrapper around the HTTPCraft CLI tool, providing AI
 ### Technology Stack
 - **Runtime**: Node.js (v18+)
 - **Language**: TypeScript
+- **Package Management**: Nix flakes for reproducible environments
 - **MCP SDK**: @modelcontextprotocol/sdk
 - **Validation**: Zod schemas
 - **Process Execution**: Node.js child_process

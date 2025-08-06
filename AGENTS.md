@@ -8,12 +8,28 @@ You are working on **HTTPCraft MCP**, a Model Context Protocol (MCP) server that
 
 - **Language**: TypeScript with strict mode enabled
 - **Runtime**: Node.js v18+
+- **Package Management**: Nix flakes for reproducible development environment
 - **Framework**: MCP SDK (@modelcontextprotocol/sdk)
 - **Validation**: Zod schemas for all inputs/outputs
 - **Testing**: Jest with comprehensive coverage
 - **Build**: Standard TypeScript compiler
 
 ## Development Workflow
+
+### Nix Development Environment
+This project uses **Nix flakes** for reproducible development environments. All system dependencies (Node.js, HTTPCraft CLI, etc.) are managed through Nix.
+
+**Setup**:
+1. Install Nix with flakes enabled
+2. Install direnv: `nix profile install nixpkgs#direnv`
+3. Add direnv hook to your shell
+4. Create `.envrc` with `use flake .` in project root
+5. Run `direnv allow` to activate the environment
+
+**Adding Dependencies**:
+- **System packages**: Add to `devShell.nativeBuildInputs` in `flake.nix`
+- **Node.js packages**: Add to `package.json` as usual
+- **Development tools**: Add to `devShell.packages` in `flake.nix`
 
 ### Follow the Phased Implementation Plan (PIP.md)
 Always refer to the PIP.md for the current development phase and tasks. Each phase has specific deliverables and test criteria that must be met before proceeding.
@@ -323,7 +339,12 @@ npm run format       # Prettier formatting
 
 ### Environment Setup
 ```bash
-# Install dependencies
+# Nix-based setup (recommended)
+# Install Nix with flakes support, then:
+echo "use flake ." > .envrc
+direnv allow  # This will install all dependencies via Nix
+
+# Manual setup (if not using Nix)
 npm install
 
 # Set up HTTPCraft for testing
@@ -469,6 +490,8 @@ function createTool(config: Partial<ToolConfig> = {}): Tool {
 ### Key Files to Know
 - `PRD.md` - Product requirements and scope
 - `PIP.md` - Implementation phases and tasks
+- `flake.nix` - Nix development environment configuration
+- `.envrc` - Direnv configuration for automatic environment loading
 - `src/server.ts` - MCP server entry point
 - `src/tools/` - All MCP tool implementations
 - `src/httpcraft/cli.ts` - HTTPCraft integration

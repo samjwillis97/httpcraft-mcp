@@ -7,17 +7,17 @@ This document provides a detailed, step-by-step implementation plan for the HTTP
 ## Development Prerequisites
 
 ### Required Tools
-- Node.js v18+ 
-- TypeScript 4.9+
-- HTTPCraft CLI (for testing)
+- Nix with flakes support (for reproducible environment)
+- Direnv (for automatic environment loading)
 - Git
 - IDE with TypeScript support
 
 ### Setup Steps
-1. Initialize Node.js project with TypeScript
-2. Install MCP SDK and dependencies
-3. Set up testing framework
-4. Configure development tooling (linting, formatting)
+1. Install Nix with flakes enabled
+2. Install direnv and configure shell integration
+3. Create Nix flake with development environment
+4. Set up direnv with `.envrc`
+5. Configure development tooling (linting, formatting)
 
 ---
 
@@ -28,6 +28,8 @@ This document provides a detailed, step-by-step implementation plan for the HTTP
 
 ### Phase 1.1: Project Setup
 **Tasks**:
+- [ ] Create Nix flake with Node.js v18+ and development dependencies
+- [ ] Set up `.envrc` with `use flake .` for direnv integration
 - [ ] Initialize npm project with TypeScript configuration
 - [ ] Install core dependencies (@modelcontextprotocol/sdk, zod)
 - [ ] Set up build scripts and development workflow
@@ -35,6 +37,8 @@ This document provides a detailed, step-by-step implementation plan for the HTTP
 - [ ] Create basic project structure (src/, tests/, docs/)
 
 **Deliverables**:
+- `flake.nix` - Nix development environment
+- `.envrc` - Direnv configuration
 - Working TypeScript build system
 - Package.json with all dependencies
 - Basic project structure
@@ -42,6 +46,12 @@ This document provides a detailed, step-by-step implementation plan for the HTTP
 
 **Test Criteria**:
 ```bash
+# Nix environment should load automatically
+direnv allow
+which node     # Should show Nix store path
+which npm      # Should show Nix store path
+
+# Build system should work
 npm run build    # Should compile without errors
 npm run lint     # Should pass linting
 npm test         # Should run (even if no tests yet)
