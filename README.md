@@ -29,7 +29,7 @@ npm run test
 
 ### Alternative Setup (without Nix)
 If you prefer not to use Nix, you'll need to manually install:
-- Node.js v18+
+- Node.js v20+
 - HTTPCraft CLI
 - TypeScript
 
