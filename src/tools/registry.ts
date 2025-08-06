@@ -3,8 +3,8 @@
  * Manages registration and discovery of HTTPCraft MCP tools
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
-import type { BaseTool, ToolResult, ToolExecutionContext } from './base.js';
+import type { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { BaseTool, ToolExecutionContext } from './base.js';
 import { logger } from '../utils/logger.js';
 
 export class ToolRegistry {
@@ -61,7 +61,7 @@ export class ToolRegistry {
     toolName: string,
     params: unknown,
     context?: ToolExecutionContext
-  ): Promise<ToolResult> {
+  ): Promise<CallToolResult> {
     const tool = this.getTool(toolName);
     if (!tool) {
       throw new Error(`Tool not found: ${toolName}`);

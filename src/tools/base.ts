@@ -4,19 +4,9 @@
  */
 
 import { z } from 'zod';
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { logger } from '../utils/logger.js';
 import type { HttpCraftCli } from '../httpcraft/cli.js';
-
-export interface ToolResult {
-  content: Array<{
-    type: 'text' | 'image' | 'resource';
-    text?: string;
-    data?: string;
-    mimeType?: string;
-  }>;
-  isError?: boolean;
-}
 
 export interface ToolExecutionContext {
   requestId?: string;
@@ -27,6 +17,7 @@ export interface ToolExecutionContext {
 export abstract class BaseTool {
   abstract readonly name: string;
   abstract readonly description: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   abstract readonly inputSchema: z.ZodSchema<any>;
 
   protected readonly httpcraft: HttpCraftCli;
@@ -52,7 +43,7 @@ export abstract class BaseTool {
   public async execute(
     params: unknown,
     context: ToolExecutionContext = { timestamp: new Date() }
-  ): Promise<ToolResult> {
+  ): Promise<CallToolResult> {
     const startTime = Date.now();
 
     try {
@@ -96,7 +87,7 @@ export abstract class BaseTool {
   protected abstract executeInternal(
     params: z.infer<typeof this.inputSchema>,
     context: ToolExecutionContext
-  ): Promise<ToolResult>;
+  ): Promise<CallToolResult>;
 
   /**
    * Validate input parameters using Zod schema
@@ -116,14 +107,14 @@ export abstract class BaseTool {
   /**
    * Format successful response
    */
-  protected formatSuccess(data: any, mimeType = 'application/json'): ToolResult {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected formatSuccess(data: any): CallToolResult {
     const text = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
     return {
       content: [
         {
           type: 'text',
           text,
-          mimeType,
         },
       ],
       isError: false,
@@ -133,7 +124,7 @@ export abstract class BaseTool {
   /**
    * Format error response
    */
-  protected formatError(error: unknown): ToolResult {
+  protected formatError(error: unknown): CallToolResult {
     const message = error instanceof Error ? error.message : String(error);
     return {
       content: [
@@ -148,7 +139,6 @@ export abstract class BaseTool {
             null,
             2
           ),
-          mimeType: 'application/json',
         },
       ],
       isError: true,
@@ -158,11 +148,13 @@ export abstract class BaseTool {
   /**
    * Convert Zod schema to JSON Schema
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private zodToJsonSchema(schema: z.ZodSchema<any>): any {
     // Simple conversion for basic types
     // In a production implementation, you might want to use a library like zod-to-json-schema
     if (schema instanceof z.ZodObject) {
       const shape = schema.shape;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const properties: Record<string, any> = {};
       const required: string[] = [];
 

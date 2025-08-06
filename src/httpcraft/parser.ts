@@ -67,7 +67,7 @@ export class ResponseParser {
   /**
    * Parse HTTPCraft command output (legacy method for backward compatibility)
    */
-  public parseOutput(
+  public async parseOutput(
     stdout: string,
     stderr: string,
     command: string
@@ -108,7 +108,7 @@ export class ResponseParser {
     }
 
     // Try to parse the response
-    const responseResult = this.parseResponse(stdout);
+    const responseResult = await this.parseResponse(stdout);
     if (!responseResult.success) {
       return {
         success: false,
@@ -128,7 +128,7 @@ export class ResponseParser {
   /**
    * Parse HTTPCraft CLI output into structured response (new method)
    */
-  public parseHttpCraftOutput(
+  public async parseHttpCraftOutput(
     stdout: string,
     options: ParseOptions = {}
   ): AsyncResult<HttpCraftResponse> {
@@ -150,7 +150,7 @@ export class ResponseParser {
     }
 
     // Try JSON parsing first
-    const jsonResult = this.parseJsonOutput(stdout, opts.validateJson);
+    const jsonResult = await this.parseJsonOutput(stdout, opts.validateJson);
     if (jsonResult.success) {
       return { success: true, data: jsonResult.data };
     }
@@ -163,7 +163,7 @@ export class ResponseParser {
   /**
    * Parse HTTPCraft JSON output
    */
-  private parseJsonOutput(stdout: string, validate: boolean): AsyncResult<HttpCraftResponse> {
+  private async parseJsonOutput(stdout: string, validate: boolean): AsyncResult<HttpCraftResponse> {
     try {
       const jsonOutput = JSON.parse(stdout);
 
@@ -251,7 +251,7 @@ export class ResponseParser {
     for (const pattern of patterns) {
       const match = output.match(pattern);
       if (match) {
-        const statusCode = parseInt(match[1], 10);
+        const statusCode = parseInt(match[1] || '0', 10);
         if (statusCode >= 100 && statusCode < 600) {
           return statusCode;
         }
@@ -270,8 +270,8 @@ export class ResponseParser {
 
     let match;
     while ((match = headerRegex.exec(output)) !== null) {
-      const key = match[1].trim();
-      const value = match[2].trim();
+      const key = match[1]?.trim() || '';
+      const value = match[2]?.trim() || '';
 
       // Skip lines that don't look like HTTP headers
       if (key.includes(' ') || key.length > 50) {
@@ -352,7 +352,7 @@ export class ResponseParser {
     for (const pattern of errorPatterns) {
       const match = stderr.match(pattern);
       if (match) {
-        return match[1].trim();
+        return match[1]?.trim() || stderr.trim();
       }
     }
 
@@ -397,18 +397,18 @@ export class ResponseParser {
   }
 
   /**
-   * Parse HTTP response from HTTPCraft output (legacy method)
+   * Legacy response parsing (internal method)
    */
-  private parseResponse(output: string): AsyncResult<ParsedResponse> {
+  private async parseResponse(output: string): AsyncResult<ParsedResponse> {
     try {
       // First, try to parse as JSON (for structured HTTPCraft output)
-      const jsonResult = this.tryParseAsJson(output);
+      const jsonResult = await this.tryParseAsJson(output);
       if (jsonResult.success) {
         return jsonResult;
       }
 
       // If not JSON, treat as raw text response
-      return this.parseAsRawText(output);
+      return await this.parseAsRawText(output);
     } catch (error) {
       logger.error('Failed to parse HTTPCraft response', {}, error as Error);
       return {
@@ -421,7 +421,7 @@ export class ResponseParser {
   /**
    * Attempt to parse output as JSON (legacy method)
    */
-  private tryParseAsJson(output: string): AsyncResult<ParsedResponse> {
+  private async tryParseAsJson(output: string): AsyncResult<ParsedResponse> {
     try {
       const data = JSON.parse(output);
       logger.debug('Successfully parsed HTTPCraft output as JSON');
@@ -448,7 +448,7 @@ export class ResponseParser {
   /**
    * Parse output as raw text (legacy method)
    */
-  private parseAsRawText(output: string): AsyncResult<ParsedResponse> {
+  private async parseAsRawText(output: string): AsyncResult<ParsedResponse> {
     // Try to extract HTTP-like information from the output
     const lines = output.split('\n');
     let statusCode: number | undefined;
@@ -458,7 +458,7 @@ export class ResponseParser {
     // Look for HTTP status line
     const statusMatch = lines[0]?.match(/HTTP\/[\d.]+\s+(\d+)/);
     if (statusMatch) {
-      statusCode = parseInt(statusMatch[1], 10);
+      statusCode = parseInt(statusMatch[1] || '0', 10);
     }
 
     // Look for headers section

@@ -60,14 +60,15 @@ class HttpCraftMcpServer {
   private setupTools(): void {
     // We need to create HttpCraftCli instance for the tools
     // Note: this is a simplified version for now, will be enhanced with the full CLI in later phases
-    const httpCraftCli = this.httpCraft as any; // Type assertion for now
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const httpCraftCli = this.httpCraft as any;
 
     // Register core tools
     try {
       toolRegistry.register(new ExecuteApiTool(httpCraftCli));
       toolRegistry.register(new ExecuteRequestTool(httpCraftCli));
       toolRegistry.register(new ExecuteChainTool(httpCraftCli));
-      
+
       logger.info('Tools registered successfully', {
         toolCount: toolRegistry.getToolCount(),
         tools: toolRegistry.getToolNames(),
@@ -81,10 +82,10 @@ class HttpCraftMcpServer {
     // List available tools
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       logger.debug('Received list_tools request');
-      
+
       // Get tools from registry plus the health check tool
       const registryTools = toolRegistry.getToolDefinitions();
-      
+
       return {
         tools: [
           ...registryTools,
@@ -131,11 +132,15 @@ class HttpCraftMcpServer {
           content: [
             {
               type: 'text',
-              text: JSON.stringify({
-                error: true,
-                message: (error as Error).message,
-                timestamp: new Date().toISOString(),
-              }, null, 2),
+              text: JSON.stringify(
+                {
+                  error: true,
+                  message: (error as Error).message,
+                  timestamp: new Date().toISOString(),
+                },
+                null,
+                2
+              ),
             },
           ],
           isError: true,

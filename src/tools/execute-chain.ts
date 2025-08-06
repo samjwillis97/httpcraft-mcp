@@ -3,7 +3,8 @@
  * Executes HTTPCraft request chains with variable passing and error handling
  */
 
-import { BaseTool, type ToolResult, type ToolExecutionContext } from './base.js';
+import { BaseTool, type ToolExecutionContext } from './base.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import {
   ExecuteChainSchema,
   type ExecuteChainParams,
@@ -18,6 +19,9 @@ import {
 import { logger } from '../utils/logger.js';
 import type { HttpCraftCli } from '../httpcraft/cli.js';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type HttpCraftExecuteResult = any;
+
 export class ExecuteChainTool extends BaseTool {
   public readonly name = 'httpcraft_execute_chain';
   public readonly description =
@@ -31,7 +35,7 @@ export class ExecuteChainTool extends BaseTool {
   protected async executeInternal(
     params: ExecuteChainParams,
     context: ToolExecutionContext
-  ): Promise<ToolResult> {
+  ): Promise<CallToolResult> {
     logger.debug('Executing request chain', {
       chain: params.chain,
       profile: params.profile,
@@ -40,8 +44,6 @@ export class ExecuteChainTool extends BaseTool {
     });
 
     const startTime = Date.now();
-    const steps: ChainStep[] = [];
-    let failedStep: number | undefined;
 
     // Build HTTPCraft command arguments
     const args = this.buildCommandArgs(params);
@@ -71,7 +73,7 @@ export class ExecuteChainTool extends BaseTool {
         requestId: context.requestId,
       });
 
-      return formatHttpCraftError(httpcraftResult.stderr, httpcraftResult.exitCode, args);
+      return formatHttpCraftError(errorMessage, httpcraftResult.exitCode, args);
     }
 
     // Parse and format the chain response
@@ -141,14 +143,14 @@ export class ExecuteChainTool extends BaseTool {
    * Parse and format the chain response using the enhanced parser
    */
   private async parseAndFormatChainResponse(
-    httpcraftResult: any,
+    httpcraftResult: HttpCraftExecuteResult,
     context: ToolExecutionContext,
     startTime: number
-  ): Promise<ToolResult> {
+  ): Promise<CallToolResult> {
     const { ResponseParser } = await import('../httpcraft/parser.js');
     const parser = new ResponseParser();
 
-    const parseResult = parser.parseHttpCraftOutput(httpcraftResult.stdout);
+    const parseResult = await parser.parseHttpCraftOutput(httpcraftResult.stdout);
 
     if (!parseResult.success) {
       logger.error('Failed to parse HTTPCraft chain output', {
@@ -190,6 +192,7 @@ export class ExecuteChainTool extends BaseTool {
   /**
    * Transform raw HTTPCraft output into ChainResponse format
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private transformToChainResponse(rawResponse: any, startTime: number): ChainResponse {
     const totalDuration = Date.now() - startTime;
 
@@ -198,6 +201,7 @@ export class ExecuteChainTool extends BaseTool {
       // Direct chain response format
       return {
         success: rawResponse.success ?? true,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         steps: rawResponse.steps.map((step: any, index: number) => this.transformStep(step, index)),
         failedStep: rawResponse.failedStep,
         totalDuration: rawResponse.totalDuration ?? totalDuration,
@@ -226,6 +230,7 @@ export class ExecuteChainTool extends BaseTool {
   /**
    * Transform a single step response
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private transformStep(stepData: any, index: number): ChainStep {
     return {
       name: stepData.name || `step-${index + 1}`,

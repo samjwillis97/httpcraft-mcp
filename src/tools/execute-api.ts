@@ -3,7 +3,8 @@
  * Executes configured HTTPCraft API endpoints
  */
 
-import { BaseTool, type ToolResult, type ToolExecutionContext } from './base.js';
+import { BaseTool, type ToolExecutionContext } from './base.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { ExecuteApiSchema, type ExecuteApiParams } from '../schemas/tools.js';
 import {
   formatHttpResponse,
@@ -12,6 +13,9 @@ import {
 } from '../utils/response.js';
 import { logger } from '../utils/logger.js';
 import type { HttpCraftCli } from '../httpcraft/cli.js';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type HttpCraftExecuteResult = any;
 
 export class ExecuteApiTool extends BaseTool {
   public readonly name = 'httpcraft_execute_api';
@@ -26,7 +30,7 @@ export class ExecuteApiTool extends BaseTool {
   protected async executeInternal(
     params: ExecuteApiParams,
     context: ToolExecutionContext
-  ): Promise<ToolResult> {
+  ): Promise<CallToolResult> {
     logger.debug('Executing API endpoint', {
       api: params.api,
       endpoint: params.endpoint,
@@ -62,7 +66,7 @@ export class ExecuteApiTool extends BaseTool {
         requestId: context.requestId,
       });
 
-      return formatHttpCraftError(httpcraftResult.stderr, httpcraftResult.exitCode, args);
+      return formatHttpCraftError(errorMessage, httpcraftResult.exitCode, args);
     }
 
     // Parse and format the response
@@ -120,13 +124,13 @@ export class ExecuteApiTool extends BaseTool {
    * Parse and format the response using the enhanced parser
    */
   private async parseAndFormatResponse(
-    httpcraftResult: any,
+    httpcraftResult: HttpCraftExecuteResult,
     context: ToolExecutionContext
-  ): Promise<ToolResult> {
+  ): Promise<CallToolResult> {
     const { ResponseParser } = await import('../httpcraft/parser.js');
     const parser = new ResponseParser();
 
-    const parseResult = parser.parseHttpCraftOutput(httpcraftResult.stdout);
+    const parseResult = await parser.parseHttpCraftOutput(httpcraftResult.stdout);
 
     if (!parseResult.success) {
       logger.error('Failed to parse HTTPCraft output', {

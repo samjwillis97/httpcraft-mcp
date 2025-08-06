@@ -1,0 +1,15 @@
+{
+  "mcp": {
+    "sentry": {
+      "type": "remote",
+      "url": "",
+      "enabled": false
+    },
+    "playwright": {
+      "type": "local",
+      "command": [],
+      "enabled": false
+    }
+  },
+  "$schema": "https://opencode.ai/config.json"
+}

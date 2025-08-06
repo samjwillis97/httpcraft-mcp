@@ -4,7 +4,8 @@
  */
 
 import { z } from 'zod';
-import { BaseTool, ToolResult, ToolExecutionContext } from '../../src/tools/base.js';
+import { BaseTool, ToolExecutionContext } from '../../src/tools/base.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { HttpCraftCli } from '../../src/httpcraft/cli.js';
 
 // Mock implementation for testing
@@ -21,12 +22,12 @@ class TestTool extends BaseTool {
   protected async executeInternal(
     params: z.infer<typeof this.inputSchema>,
     context: ToolExecutionContext
-  ): Promise<ToolResult> {
+  ): Promise<CallToolResult> {
     // Simulate different behaviors based on input
     if (params.required_field === 'error') {
       throw new Error('Test error');
     }
-    
+
     if (params.required_field === 'timeout') {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
@@ -110,11 +111,15 @@ describe('BaseTool', () => {
         content: [
           {
             type: 'text',
-            text: JSON.stringify({
-              received: validParams,
-              timestamp: '2023-01-01T00:00:00.000Z',
-              requestId: 'test-123',
-            }, null, 2),
+            text: JSON.stringify(
+              {
+                received: validParams,
+                timestamp: '2023-01-01T00:00:00.000Z',
+                requestId: 'test-123',
+              },
+              null,
+              2
+            ),
             mimeType: 'application/json',
           },
         ],
@@ -127,7 +132,7 @@ describe('BaseTool', () => {
 
       expect(result.isError).toBe(false);
       expect(result.content[0].type).toBe('text');
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.received).toEqual(validParams);
       expect(parsedContent.timestamp).toBeDefined();
@@ -144,7 +149,7 @@ describe('BaseTool', () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0].type).toBe('text');
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.error).toBe(true);
       expect(parsedContent.message).toContain('Parameter validation failed');
@@ -163,7 +168,7 @@ describe('BaseTool', () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0].type).toBe('text');
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.error).toBe(true);
       expect(parsedContent.message).toBe('Test error');
@@ -181,7 +186,7 @@ describe('BaseTool', () => {
       const result = await tool.execute(paramsWithOptional);
 
       expect(result.isError).toBe(false);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.received.optional_field).toBe('optional_value');
     });
@@ -194,7 +199,7 @@ describe('BaseTool', () => {
       const result = await tool.execute(validParams);
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.message).toBe('String error');
 
@@ -222,9 +227,7 @@ describe('BaseTool', () => {
         boolean_field: 'not a boolean',
       };
 
-      expect(() => tool['validateInput'](invalidInput)).toThrow(
-        'Parameter validation failed'
-      );
+      expect(() => tool['validateInput'](invalidInput)).toThrow('Parameter validation failed');
     });
 
     it('should handle missing required fields', () => {
@@ -233,9 +236,7 @@ describe('BaseTool', () => {
         // missing number_field and boolean_field
       };
 
-      expect(() => tool['validateInput'](incompleteInput)).toThrow(
-        'Parameter validation failed'
-      );
+      expect(() => tool['validateInput'](incompleteInput)).toThrow('Parameter validation failed');
     });
 
     it('should handle non-ZodError exceptions', () => {
@@ -313,7 +314,7 @@ describe('BaseTool', () => {
       const result = tool['formatError'](error);
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.message).toBe('String error');
     });
@@ -346,7 +347,7 @@ describe('BaseTool', () => {
         readonly name = 'test';
         readonly description = 'test';
         readonly inputSchema = schema;
-        protected async executeInternal(): Promise<ToolResult> {
+        protected async executeInternal(): Promise<CallToolResult> {
           return this.formatSuccess({});
         }
       })(mockHttpCraft);
@@ -375,12 +376,12 @@ describe('BaseTool', () => {
 
     it('should handle non-ZodObject schemas', () => {
       const schema = z.string();
-      
+
       const tool = new (class extends BaseTool {
         readonly name = 'test';
         readonly description = 'test';
         readonly inputSchema = schema;
-        protected async executeInternal(): Promise<ToolResult> {
+        protected async executeInternal(): Promise<CallToolResult> {
           return this.formatSuccess({});
         }
       })(mockHttpCraft);

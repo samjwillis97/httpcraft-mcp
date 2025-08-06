@@ -3,13 +3,13 @@
  * Standardized response formatting for HTTPCraft MCP tools
  */
 
-import type { ToolResult } from '../tools/base.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { HttpCraftResponse, ChainResponse, DiscoveryResponse } from '../schemas/tools.js';
 
 /**
  * Format a successful HTTP response
  */
-export function formatHttpResponse(response: HttpCraftResponse): ToolResult {
+export function formatHttpResponse(response: HttpCraftResponse): CallToolResult {
   return {
     content: [
       {
@@ -35,7 +35,7 @@ export function formatHttpResponse(response: HttpCraftResponse): ToolResult {
 /**
  * Format a chain execution response
  */
-export function formatChainResponse(response: ChainResponse): ToolResult {
+export function formatChainResponse(response: ChainResponse): CallToolResult {
   return {
     content: [
       {
@@ -67,7 +67,7 @@ export function formatChainResponse(response: ChainResponse): ToolResult {
 /**
  * Format a discovery response (APIs, endpoints, profiles, etc.)
  */
-export function formatDiscoveryResponse(response: DiscoveryResponse): ToolResult {
+export function formatDiscoveryResponse(response: DiscoveryResponse): CallToolResult {
   return {
     content: [
       {
@@ -96,9 +96,10 @@ export function formatErrorResponse(
   context?: {
     tool?: string;
     operation?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     params?: any;
   }
-): ToolResult {
+): CallToolResult {
   const message = error instanceof Error ? error.message : error;
 
   return {
@@ -125,7 +126,7 @@ export function formatErrorResponse(
 /**
  * Format a simple text response
  */
-export function formatTextResponse(text: string, isError = false): ToolResult {
+export function formatTextResponse(text: string, isError = false): CallToolResult {
   return {
     content: [
       {
@@ -140,7 +141,8 @@ export function formatTextResponse(text: string, isError = false): ToolResult {
 /**
  * Format structured data response
  */
-export function formatDataResponse(data: any, isError = false): ToolResult {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function formatDataResponse(data: any, isError = false): CallToolResult {
   const text = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
 
   return {
@@ -158,7 +160,7 @@ export function formatDataResponse(data: any, isError = false): ToolResult {
 /**
  * Format validation error response
  */
-export function formatValidationError(errors: string[]): ToolResult {
+export function formatValidationError(errors: string[]): CallToolResult {
   return {
     content: [
       {
@@ -188,7 +190,7 @@ export function formatHttpCraftError(
   stderr: string,
   exitCode: number,
   command?: string[]
-): ToolResult {
+): CallToolResult {
   return {
     content: [
       {
@@ -223,7 +225,7 @@ export function extractHttpCraftError(stderr: string): string {
   for (const pattern of patterns) {
     const match = stderr.match(pattern);
     if (match) {
-      return match[1].trim();
+      return match[1]?.trim() || match[0];
     }
   }
 

@@ -113,7 +113,7 @@ export class HttpCraftCli {
       const versionResult = await this.getVersion();
       return versionResult.success;
     } catch (error) {
-      logger.warn('HTTPCraft availability check failed', {}, error as Error);
+      logger.warn('HTTPCraft availability check failed', { error: (error as Error).message });
       return false;
     }
   }
