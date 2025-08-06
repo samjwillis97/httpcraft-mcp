@@ -118,10 +118,10 @@ expect(result.stdout).toContain('httpcraft');
 
 ### Phase 2.1: Tool Infrastructure
 **Tasks**:
-- [ ] Create base tool class with common functionality
-- [ ] Implement tool registration system
-- [ ] Add Zod schema validation for tool parameters
-- [ ] Create response formatting utilities
+- [x] Create base tool class with common functionality
+- [x] Implement tool registration system
+- [x] Add Zod schema validation for tool parameters
+- [x] Create response formatting utilities
 
 **Deliverables**:
 - `src/tools/base.ts` - Base tool class
@@ -143,11 +143,11 @@ expect(result.success).toBe(true);
 
 ### Phase 2.2: Execute API Tool
 **Tasks**:
-- [ ] Implement `httpcraft_execute_api` tool
-- [ ] Add parameter validation and sanitization
-- [ ] Handle HTTPCraft profile and environment options
-- [ ] Parse and structure API responses
-- [ ] Add comprehensive error handling
+- [x] Implement `httpcraft_execute_api` tool
+- [x] Add parameter validation and sanitization
+- [x] Handle HTTPCraft profile and environment options
+- [x] Parse and structure API responses
+- [x] Add comprehensive error handling
 
 **Deliverables**:
 - `src/tools/execute-api.ts` - API execution tool
@@ -177,11 +177,11 @@ expect(errorResult.error).toContain('API not found');
 
 ### Phase 2.3: Execute Request Tool
 **Tasks**:
-- [ ] Implement `httpcraft_execute_request` tool
-- [ ] Support all HTTP methods and request options
-- [ ] Handle authentication parameters
-- [ ] Validate URLs and request parameters
-- [ ] Parse response data and metadata
+- [x] Implement `httpcraft_execute_request` tool
+- [x] Support all HTTP methods and request options
+- [x] Handle authentication parameters
+- [x] Validate URLs and request parameters
+- [x] Parse response data and metadata
 
 **Deliverables**:
 - `src/tools/execute-request.ts` - Standalone request tool
@@ -210,11 +210,11 @@ expect(postResult.success).toBe(true);
 
 ### Phase 2.4: Response Processing
 **Tasks**:
-- [ ] Implement robust JSON response parsing
-- [ ] Handle non-JSON responses appropriately
-- [ ] Extract response metadata (headers, timing, status)
-- [ ] Preserve error context from HTTPCraft
-- [ ] Add response size limits and validation
+- [x] Implement robust JSON response parsing
+- [x] Handle non-JSON responses appropriately
+- [x] Extract response metadata (headers, timing, status)
+- [x] Preserve error context from HTTPCraft
+- [x] Add response size limits and validation
 
 **Deliverables**:
 - `src/httpcraft/parser.ts` - Response parsing logic
@@ -235,11 +235,11 @@ expect(malformed.error).toContain('Invalid JSON');
 ```
 
 ### Phase 2 Success Criteria
-- [ ] `httpcraft_execute_api` tool works with test configurations
-- [ ] `httpcraft_execute_request` tool handles all HTTP methods
-- [ ] Response parsing handles JSON and non-JSON correctly
-- [ ] Error scenarios are handled gracefully
-- [ ] All tools are properly registered and discoverable
+- [x] `httpcraft_execute_api` tool works with test configurations
+- [x] `httpcraft_execute_request` tool handles all HTTP methods
+- [x] Response parsing handles JSON and non-JSON correctly
+- [x] Error scenarios are handled gracefully
+- [x] All tools are properly registered and discoverable
 - [ ] Comprehensive test coverage (>80%)
 
 ---

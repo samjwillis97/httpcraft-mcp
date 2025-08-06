@@ -12,6 +12,9 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 import { logger } from './utils/logger.js';
 import type { ServerConfig, HealthStatus } from './types/index.js';
 import { HttpCraftCli } from './httpcraft/cli-simple.js';
+import { toolRegistry } from './tools/registry.js';
+import { ExecuteApiTool } from './tools/execute-api.js';
+import { ExecuteRequestTool } from './tools/execute-request.js';
 
 class HttpCraftMcpServer {
   private readonly server: Server;
@@ -43,6 +46,7 @@ class HttpCraftMcpServer {
       }
     );
 
+    this.setupTools();
     this.setupHandlers();
     this.setupGracefulShutdown();
 
@@ -52,12 +56,36 @@ class HttpCraftMcpServer {
     });
   }
 
+  private setupTools(): void {
+    // We need to create HttpCraftCli instance for the tools
+    // Note: this is a simplified version for now, will be enhanced with the full CLI in later phases
+    const httpCraftCli = this.httpCraft as any; // Type assertion for now
+
+    // Register core tools
+    try {
+      toolRegistry.register(new ExecuteApiTool(httpCraftCli));
+      toolRegistry.register(new ExecuteRequestTool(httpCraftCli));
+      
+      logger.info('Tools registered successfully', {
+        toolCount: toolRegistry.getToolCount(),
+        tools: toolRegistry.getToolNames(),
+      });
+    } catch (error) {
+      logger.error('Failed to register tools', {}, error as Error);
+    }
+  }
+
   private setupHandlers(): void {
     // List available tools
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       logger.debug('Received list_tools request');
+      
+      // Get tools from registry plus the health check tool
+      const registryTools = toolRegistry.getToolDefinitions();
+      
       return {
         tools: [
+          ...registryTools,
           {
             name: 'httpcraft_health',
             description: 'Check the health status of the HTTPCraft MCP server',
@@ -74,11 +102,42 @@ class HttpCraftMcpServer {
     this.server.setRequestHandler(CallToolRequestSchema, async request => {
       logger.debug('Received call_tool request', { toolName: request.params.name });
 
-      switch (request.params.name) {
-        case 'httpcraft_health':
-          return this.handleHealthCheck();
-        default:
-          throw new Error(`Unknown tool: ${request.params.name}`);
+      // Handle health check tool separately
+      if (request.params.name === 'httpcraft_health') {
+        return this.handleHealthCheck();
+      }
+
+      // Use tool registry for other tools
+      try {
+        const result = await toolRegistry.executeTool(
+          request.params.name,
+          request.params.arguments,
+          {
+            requestId: `req-${Date.now()}`,
+            timestamp: new Date(),
+          }
+        );
+
+        return result;
+      } catch (error) {
+        logger.error('Tool execution failed', {
+          toolName: request.params.name,
+          error: (error as Error).message,
+        });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: true,
+                message: (error as Error).message,
+                timestamp: new Date().toISOString(),
+              }, null, 2),
+            },
+          ],
+          isError: true,
+        };
       }
     });
 
