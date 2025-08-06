@@ -34,6 +34,11 @@ This project uses **Nix flakes** for reproducible development environments. All 
 ### Follow the Phased Implementation Plan (PIP.md)
 Always refer to the PIP.md for the current development phase and tasks. Each phase has specific deliverables and test criteria that must be met before proceeding.
 
+**IMPORTANT**: After completing any step or task in PIP.md:
+1. Check off the completed task in the PIP.md file
+2. Commit the changes to the repository with a descriptive commit message
+3. This ensures progress tracking and provides clear audit trail of implementation
+
 ### Project Structure
 ```
 src/
@@ -498,10 +503,12 @@ function createTool(config: Partial<ToolConfig> = {}): Tool {
 
 ### Development Priorities
 1. **Follow PIP.md phases** - Don't skip ahead
-2. **Test-driven development** - Write tests first
-3. **Error handling** - Handle all failure scenarios
-4. **Type safety** - Use TypeScript strictly
-5. **Documentation** - Keep docs current
+2. **Check off completed tasks** - Mark tasks as done in PIP.md
+3. **Commit progress regularly** - Commit after each completed task
+4. **Test-driven development** - Write tests first
+5. **Error handling** - Handle all failure scenarios
+6. **Type safety** - Use TypeScript strictly
+7. **Documentation** - Keep docs current
 
 ### When Stuck
 1. Check the PIP.md for current phase requirements
