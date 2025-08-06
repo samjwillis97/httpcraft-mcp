@@ -37,14 +37,16 @@ const HttpCraftJsonOutputSchema = z.object({
   response: z.any().optional(),
   duration: z.number().optional(),
   totalTime: z.number().optional(),
-  timing: z.object({
-    dns: z.number().optional(),
-    connect: z.number().optional(),
-    ssl: z.number().optional(),
-    send: z.number().optional(),
-    wait: z.number().optional(),
-    receive: z.number().optional(),
-  }).optional(),
+  timing: z
+    .object({
+      dns: z.number().optional(),
+      connect: z.number().optional(),
+      ssl: z.number().optional(),
+      send: z.number().optional(),
+      wait: z.number().optional(),
+      receive: z.number().optional(),
+    })
+    .optional(),
 });
 
 type HttpCraftJsonOutput = z.infer<typeof HttpCraftJsonOutputSchema>;
@@ -65,7 +67,11 @@ export class ResponseParser {
   /**
    * Parse HTTPCraft command output (legacy method for backward compatibility)
    */
-  public parseOutput(stdout: string, stderr: string, command: string): AsyncResult<HttpCraftOutput> {
+  public parseOutput(
+    stdout: string,
+    stderr: string,
+    command: string
+  ): AsyncResult<HttpCraftOutput> {
     logger.debug('Parsing HTTPCraft output', {
       stdoutLength: stdout.length,
       stderrLength: stderr.length,
@@ -122,7 +128,10 @@ export class ResponseParser {
   /**
    * Parse HTTPCraft CLI output into structured response (new method)
    */
-  public parseHttpCraftOutput(stdout: string, options: ParseOptions = {}): AsyncResult<HttpCraftResponse> {
+  public parseHttpCraftOutput(
+    stdout: string,
+    options: ParseOptions = {}
+  ): AsyncResult<HttpCraftResponse> {
     const opts = { ...this.defaultOptions, ...options };
 
     // Check response size limit
@@ -131,10 +140,12 @@ export class ResponseParser {
         outputSize: stdout.length,
         maxSize: opts.maxResponseSize,
       });
-      
+
       return {
         success: false,
-        error: new Error(`Response size (${stdout.length} bytes) exceeds limit (${opts.maxResponseSize} bytes)`),
+        error: new Error(
+          `Response size (${stdout.length} bytes) exceeds limit (${opts.maxResponseSize} bytes)`
+        ),
       };
     }
 
@@ -256,17 +267,17 @@ export class ResponseParser {
   private extractHeaders(output: string): Record<string, string> {
     const headers: Record<string, string> = {};
     const headerRegex = /^([a-zA-Z-]+):\s*(.+)$/gm;
-    
+
     let match;
     while ((match = headerRegex.exec(output)) !== null) {
       const key = match[1].trim();
       const value = match[2].trim();
-      
+
       // Skip lines that don't look like HTTP headers
       if (key.includes(' ') || key.length > 50) {
         continue;
       }
-      
+
       headers[key] = value;
     }
 
@@ -316,11 +327,11 @@ export class ResponseParser {
    */
   private normalizeHeaders(headers: Record<string, string>): Record<string, string> {
     const normalized: Record<string, string> = {};
-    
+
     for (const [key, value] of Object.entries(headers)) {
       normalized[key.toLowerCase()] = value;
     }
-    
+
     return normalized;
   }
 

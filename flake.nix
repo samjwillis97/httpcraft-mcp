@@ -4,9 +4,11 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    git-hooks.url = "github:cachix/git-hooks.nix";
+    git-hooks.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils, git-hooks }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
@@ -19,9 +21,69 @@
           echo "Args: $@"
         '';
         
+        # Pre-commit hooks configuration
+        pre-commit-check = git-hooks.lib.${system}.run {
+          src = ./.;
+          hooks = {
+            # TypeScript compilation check
+            tsc = {
+              enable = true;
+              name = "TypeScript compilation";
+              entry = "${pkgs.nodejs_20}/bin/npm run build";
+              files = "\\.(ts|tsx)$";
+              language = "system";
+              pass_filenames = false;
+            };
+            
+            # ESLint
+            eslint = {
+              enable = true;
+              name = "ESLint";
+              entry = "${pkgs.nodejs_20}/bin/npm run lint";
+              files = "\\.(js|jsx|ts|tsx)$";
+              language = "system";
+              pass_filenames = false;
+            };
+            
+            # Prettier formatting
+            prettier = {
+              enable = true;
+              name = "Prettier";
+              entry = "${pkgs.nodejs_20}/bin/npm run format";
+              files = "\\.(js|jsx|ts|tsx|json|md|yaml|yml)$";
+              language = "system";
+              pass_filenames = false;
+            };
+            
+            # TypeScript type checking
+            type-check = {
+              enable = true;
+              name = "TypeScript type checking";
+              entry = "${pkgs.nodejs_20}/bin/npm run type-check";
+              files = "\\.(ts|tsx)$";
+              language = "system";
+              pass_filenames = false;
+            };
+            
+            # Jest tests
+            jest = {
+              enable = true;
+              name = "Jest tests";
+              entry = "${pkgs.nodejs_20}/bin/npm run test";
+              files = "\\.(js|jsx|ts|tsx)$";
+              language = "system";
+              pass_filenames = false;
+            };
+          };
+        };
+        
       in
       {
+        # Pre-commit hooks check
+        checks.pre-commit-check = pre-commit-check;
+        
         devShells.default = pkgs.mkShell {
+          inherit (pre-commit-check) shellHook;
           buildInputs = with pkgs; [
             # Node.js runtime and package manager
             nodejs_20
@@ -43,36 +105,10 @@
             which
             curl
             jq
+            
+            # Pre-commit hooks
+            pre-commit-check.enabledPackages
           ];
-          
-          shellHook = ''
-            echo "🚀 HTTPCraft MCP Development Environment"
-            echo "Node.js version: $(node --version)"
-            echo "NPM version: $(npm --version)"
-            echo "TypeScript version: $(tsc --version)"
-            echo ""
-            echo "Available commands:"
-            echo "  npm run build    - Build TypeScript"
-            echo "  npm run dev      - Development mode"
-            echo "  npm run test     - Run tests"
-            echo "  npm run lint     - Lint code"
-            echo ""
-            echo "HTTPCraft CLI available at: $(which httpcraft)"
-            echo ""
-            
-            # Set up environment variables
-            export HTTPCRAFT_PATH="$(which httpcraft)"
-            export NODE_ENV="development"
-            
-            # Create .npmrc with sensible defaults if it doesn't exist
-            if [ ! -f .npmrc ]; then
-              echo "Creating .npmrc with development settings..."
-              cat > .npmrc << EOF
-save-exact=true
-engine-strict=true
-EOF
-            fi
-          '';
         };
         
         # Packages that can be built

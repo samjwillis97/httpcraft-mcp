@@ -5,13 +5,18 @@
 
 import { BaseTool, type ToolResult, type ToolExecutionContext } from './base.js';
 import { ExecuteRequestSchema, type ExecuteRequestParams } from '../schemas/tools.js';
-import { formatHttpResponse, formatHttpCraftError, extractHttpCraftError } from '../utils/response.js';
+import {
+  formatHttpResponse,
+  formatHttpCraftError,
+  extractHttpCraftError,
+} from '../utils/response.js';
 import { logger } from '../utils/logger.js';
 import type { HttpCraftCli } from '../httpcraft/cli.js';
 
 export class ExecuteRequestTool extends BaseTool {
   public readonly name = 'httpcraft_execute_request';
-  public readonly description = 'Execute a standalone HTTP request using HTTPCraft with full control over method, URL, headers, and body';
+  public readonly description =
+    'Execute a standalone HTTP request using HTTPCraft with full control over method, URL, headers, and body';
   public readonly inputSchema = ExecuteRequestSchema;
 
   constructor(httpcraft: HttpCraftCli) {
@@ -43,12 +48,8 @@ export class ExecuteRequestTool extends BaseTool {
         error: result.error?.message,
         requestId: context.requestId,
       });
-      
-      return formatHttpCraftError(
-        result.error?.message || 'Unknown error',
-        -1,
-        args
-      );
+
+      return formatHttpCraftError(result.error?.message || 'Unknown error', -1, args);
     }
 
     const httpcraftResult = result.data;
@@ -62,11 +63,7 @@ export class ExecuteRequestTool extends BaseTool {
         requestId: context.requestId,
       });
 
-      return formatHttpCraftError(
-        httpcraftResult.stderr,
-        httpcraftResult.exitCode,
-        args
-      );
+      return formatHttpCraftError(httpcraftResult.stderr, httpcraftResult.exitCode, args);
     }
 
     // Parse and format the response
@@ -145,12 +142,15 @@ export class ExecuteRequestTool extends BaseTool {
   /**
    * Parse and format the response using the enhanced parser
    */
-  private async parseAndFormatResponse(httpcraftResult: any, context: ToolExecutionContext): Promise<ToolResult> {
+  private async parseAndFormatResponse(
+    httpcraftResult: any,
+    context: ToolExecutionContext
+  ): Promise<ToolResult> {
     const { ResponseParser } = await import('../httpcraft/parser.js');
     const parser = new ResponseParser();
-    
+
     const parseResult = parser.parseHttpCraftOutput(httpcraftResult.stdout);
-    
+
     if (!parseResult.success) {
       logger.error('Failed to parse HTTPCraft output', {
         error: parseResult.error?.message,
@@ -163,7 +163,7 @@ export class ExecuteRequestTool extends BaseTool {
     }
 
     const response = parseResult.data;
-    
+
     // Validate the parsed response
     const validation = parser.validateResponse(response);
     if (!validation.valid) {

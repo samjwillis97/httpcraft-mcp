@@ -28,7 +28,7 @@ export interface LogEntry {
   readonly error?: Error | undefined;
 }
 
-export type Result<T, E = Error> = 
+export type Result<T, E = Error> =
   | { readonly success: true; readonly data: T }
   | { readonly success: false; readonly error: E };
 

@@ -149,9 +149,7 @@ export class HttpCraftCli {
 
       return {
         success: false,
-        error: new Error(
-          `Failed to parse HTTPCraft JSON output: ${(parseError as Error).message}`
-        ),
+        error: new Error(`Failed to parse HTTPCraft JSON output: ${(parseError as Error).message}`),
       };
     }
   }

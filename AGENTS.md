@@ -17,9 +17,11 @@ You are working on **HTTPCraft MCP**, a Model Context Protocol (MCP) server that
 ## Development Workflow
 
 ### Nix Development Environment
+
 This project uses **Nix flakes** for reproducible development environments. All system dependencies (Node.js, HTTPCraft CLI, etc.) are managed through Nix.
 
 **Setup**:
+
 1. Install Nix with flakes enabled
 2. Install direnv: `nix profile install nixpkgs#direnv`
 3. Add direnv hook to your shell
@@ -27,19 +29,23 @@ This project uses **Nix flakes** for reproducible development environments. All 
 5. Run `direnv allow` to activate the environment
 
 **Adding Dependencies**:
+
 - **System packages**: Add to `devShell.nativeBuildInputs` in `flake.nix`
 - **Node.js packages**: Add to `package.json` as usual
 - **Development tools**: Add to `devShell.packages` in `flake.nix`
 
 ### Follow the Phased Implementation Plan (PIP.md)
+
 Always refer to the PIP.md for the current development phase and tasks. Each phase has specific deliverables and test criteria that must be met before proceeding.
 
 **IMPORTANT**: After completing any step or task in PIP.md:
+
 1. Check off the completed task in the PIP.md file
 2. Commit the changes to the repository with a descriptive commit message
 3. This ensures progress tracking and provides clear audit trail of implementation
 
 ### Project Structure
+
 ```
 src/
 ├── server.ts              # MCP server entry point
@@ -62,6 +68,7 @@ src/
 ## Code Style Guidelines
 
 ### TypeScript Standards
+
 - **Strict Mode**: Always use TypeScript strict mode
 - **Explicit Types**: Prefer explicit types over `any`
 - **Interfaces**: Use interfaces for object shapes, types for unions
@@ -87,6 +94,7 @@ async function executeHttpCraft(args) {
 ```
 
 ### Naming Conventions
+
 - **Files**: kebab-case (`execute-api.ts`, `http-client.ts`)
 - **Classes**: PascalCase (`HttpCraftTool`, `ResponseParser`)
 - **Functions/Variables**: camelCase (`executeApi`, `configPath`)
@@ -94,6 +102,7 @@ async function executeHttpCraft(args) {
 - **Types/Interfaces**: PascalCase (`ApiResponse`, `ToolSchema`)
 
 ### Import Organization
+
 ```typescript
 // 1. Node.js built-ins
 import { spawn } from 'child_process';
@@ -114,29 +123,30 @@ import type { ToolSchema } from '../types/tools.js';
 ## MCP Tool Development
 
 ### Tool Implementation Pattern
+
 Every MCP tool should follow this pattern:
 
 ```typescript
 export class ExecuteApiTool extends BaseTool {
   name = 'httpcraft_execute_api';
   description = 'Execute a configured API endpoint using HTTPCraft';
-  
+
   inputSchema = z.object({
     api: z.string().describe('API name from configuration'),
     endpoint: z.string().describe('Endpoint name'),
     profile: z.string().describe('Profile to use'),
     environment: z.string().optional().describe('Optional environment'),
     variables: z.record(z.any()).optional().describe('Variable overrides'),
-    configPath: z.string().optional().describe('Optional config path')
+    configPath: z.string().optional().describe('Optional config path'),
   });
 
   async execute(params: z.infer<typeof this.inputSchema>): Promise<ToolResult> {
     // 1. Validate parameters
     const validated = this.inputSchema.parse(params);
-    
+
     // 2. Execute HTTPCraft command
     const result = await this.httpcraft.executeApi(validated);
-    
+
     // 3. Parse and return response
     return this.formatResponse(result);
   }
@@ -144,6 +154,7 @@ export class ExecuteApiTool extends BaseTool {
 ```
 
 ### Error Handling Standards
+
 - **Validation Errors**: Use Zod for input validation
 - **HTTPCraft Errors**: Preserve original error context
 - **System Errors**: Handle process failures gracefully
@@ -158,15 +169,15 @@ async function executeWithTimeout<T>(
   try {
     const result = await Promise.race([
       operation(),
-      new Promise<never>((_, reject) => 
+      new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Operation timeout')), timeout)
-      )
+      ),
     ]);
     return { success: true, data: result };
   } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error : new Error(String(error))
+    return {
+      success: false,
+      error: error instanceof Error ? error : new Error(String(error)),
     };
   }
 }
@@ -175,12 +186,14 @@ async function executeWithTimeout<T>(
 ## HTTPCraft Integration Guidelines
 
 ### CLI Execution Principles
+
 - **Process Isolation**: Each HTTPCraft command runs in a separate process
 - **Working Directory**: Execute from the agent's working directory
 - **Environment Variables**: Respect HTTPCraft's environment configuration
 - **Error Preservation**: Return full error context from HTTPCraft
 
 ### Configuration Discovery
+
 ```typescript
 // HTTPCraft executable discovery order:
 // 1. HTTPCRAFT_PATH environment variable
@@ -193,22 +206,23 @@ async function discoverHttpCraft(): Promise<string> {
   if (process.env.HTTPCRAFT_PATH) {
     return process.env.HTTPCRAFT_PATH;
   }
-  
+
   // Check system PATH
   const pathResult = await which('httpcraft');
   if (pathResult) return pathResult;
-  
+
   // Check common locations
   const commonPaths = ['/usr/local/bin/httpcraft', '/opt/homebrew/bin/httpcraft'];
   for (const path of commonPaths) {
     if (await fileExists(path)) return path;
   }
-  
+
   throw new Error('HTTPCraft executable not found');
 }
 ```
 
 ### Response Parsing Standards
+
 - **JSON Detection**: Auto-detect and parse JSON responses
 - **Metadata Extraction**: Capture status codes, headers, timing
 - **Error Context**: Preserve error details from HTTPCraft output
@@ -217,6 +231,7 @@ async function discoverHttpCraft(): Promise<string> {
 ## Testing Standards
 
 ### Test Structure
+
 ```typescript
 describe('ExecuteApiTool', () => {
   let tool: ExecuteApiTool;
@@ -254,12 +269,14 @@ describe('ExecuteApiTool', () => {
 ```
 
 ### Testing Categories
+
 - **Unit Tests**: Individual functions and classes
 - **Integration Tests**: HTTPCraft CLI integration
 - **End-to-End Tests**: Full MCP protocol workflow
 - **Performance Tests**: Timeout and concurrency handling
 
 ### Mock Strategies
+
 - **HTTPCraft CLI**: Mock the CLI wrapper, not the actual process
 - **File System**: Mock configuration file access
 - **Network**: Use real HTTP endpoints for integration tests
@@ -268,6 +285,7 @@ describe('ExecuteApiTool', () => {
 ## Git and Commit Standards
 
 ### Commit Message Format
+
 ```
 <type>(<scope>): <description>
 
@@ -280,30 +298,39 @@ describe('ExecuteApiTool', () => {
 **Scopes**: `tools`, `httpcraft`, `config`, `types`, `tests`
 
 Examples:
+
 - `feat(tools): add httpcraft_execute_api tool`
 - `fix(httpcraft): handle missing executable gracefully`
 - `test(tools): add comprehensive error handling tests`
 
-### Pre-commit Workflow
-Before committing, ensure:
+### Quality Assurance Workflow
+
+**CRITICAL**: After every change, you MUST run the following commands to ensure high project quality:
+
 1. `npm run build` - TypeScript compilation succeeds
-2. `npm run lint` - ESLint passes
-3. `npm run test` - All tests pass
+2. `npm run lint` - ESLint passes (run `npm run lint:fix` to auto-fix issues)
+3. `npm run format` - Prettier formatting is applied
 4. `npm run type-check` - TypeScript type checking passes
+5. `npm run test` - All tests pass
+
+**Pre-commit Workflow**: Before committing any changes, ensure all quality checks pass. This maintains code quality and prevents broken builds from being committed to the repository.
 
 ## Performance Guidelines
 
 ### Execution Timeouts
+
 - **Default Timeout**: 30 seconds for HTTPCraft commands
 - **Configurable**: Allow timeout configuration per tool
 - **Graceful Degradation**: Handle timeouts without crashing
 
 ### Memory Management
+
 - **Process Cleanup**: Ensure child processes are properly terminated
 - **Response Limits**: Set reasonable limits on response size
 - **Caching**: Cache configuration discovery results
 
 ### Concurrency
+
 - **Async/Await**: Use async/await consistently
 - **Promise Handling**: Handle concurrent requests appropriately
 - **Resource Limits**: Prevent resource exhaustion
@@ -311,11 +338,13 @@ Before committing, ensure:
 ## Security Considerations
 
 ### Input Validation
+
 - **Zod Schemas**: Validate all inputs with Zod
 - **Path Traversal**: Prevent directory traversal in config paths
 - **Command Injection**: Sanitize all CLI arguments
 
 ### Sensitive Data
+
 - **No Logging**: Never log authentication credentials
 - **Environment Variables**: Respect HTTPCraft's credential management
 - **Error Context**: Sanitize error messages for sensitive data
@@ -323,6 +352,7 @@ Before committing, ensure:
 ## Development Commands
 
 ### Available Scripts
+
 ```bash
 # Development
 npm run dev          # Start development server
@@ -343,6 +373,7 @@ npm run format       # Prettier formatting
 ```
 
 ### Environment Setup
+
 ```bash
 # Nix-based setup (recommended)
 # Install Nix with flakes support, then:
@@ -362,19 +393,20 @@ npm run dev
 ## Integration Testing
 
 ### HTTPCraft Configuration
+
 Create test configurations for integration testing:
 
 ```yaml
 # test-config.yaml
 apis:
   test-api:
-    base_url: "https://httpbin.org"
+    base_url: 'https://httpbin.org'
     endpoints:
       users:
-        path: "/json"
+        path: '/json'
         method: GET
       create_user:
-        path: "/post"
+        path: '/post'
         method: POST
 
 profiles:
@@ -385,6 +417,7 @@ profiles:
 ```
 
 ### Test Environment
+
 - Use HTTPBin (httpbin.org) for HTTP testing
 - Mock HTTPCraft CLI for unit tests
 - Use real HTTPCraft for integration tests
@@ -393,6 +426,7 @@ profiles:
 ## Debugging Guidelines
 
 ### Logging Strategy
+
 ```typescript
 import { logger } from '../utils/logger.js';
 
@@ -407,6 +441,7 @@ logger.error('HTTPCraft execution failed', { error: error.message, args });
 ```
 
 ### Error Diagnosis
+
 1. **Check HTTPCraft Installation**: Verify executable is found
 2. **Validate Configuration**: Ensure HTTPCraft configs are valid
 3. **Examine Process Output**: Check both stdout and stderr
@@ -415,20 +450,21 @@ logger.error('HTTPCraft execution failed', { error: error.message, args });
 ## Documentation Standards
 
 ### Code Documentation
+
 - **TSDoc Comments**: Use TSDoc for all public APIs
 - **Example Usage**: Include usage examples in comments
 - **Parameter Descriptions**: Document all parameters clearly
 
-```typescript
+````typescript
 /**
  * Executes an HTTPCraft API endpoint with the specified profile.
- * 
+ *
  * @param params - The API execution parameters
  * @param params.api - The API name from HTTPCraft configuration
  * @param params.endpoint - The endpoint name to execute
  * @param params.profile - The profile to use for execution
  * @returns Promise that resolves to the API response
- * 
+ *
  * @example
  * ```typescript
  * const result = await executeApi({
@@ -441,10 +477,12 @@ logger.error('HTTPCraft execution failed', { error: error.message, args });
 async function executeApi(params: ApiParams): Promise<ApiResponse> {
   // Implementation
 }
-```
+````
 
 ### README Updates
+
 Keep the README current with:
+
 - Installation instructions
 - Basic usage examples
 - Configuration requirements
@@ -453,10 +491,9 @@ Keep the README current with:
 ## Common Patterns
 
 ### Result Type Pattern
+
 ```typescript
-type Result<T, E = Error> = 
-  | { success: true; data: T }
-  | { success: false; error: E };
+type Result<T, E = Error> = { success: true; data: T } | { success: false; error: E };
 
 // Usage
 async function riskyOperation(): Promise<Result<string>> {
@@ -470,6 +507,7 @@ async function riskyOperation(): Promise<Result<string>> {
 ```
 
 ### Configuration Pattern
+
 ```typescript
 interface ToolConfig {
   timeout: number;
@@ -479,7 +517,7 @@ interface ToolConfig {
 
 const defaultConfig: ToolConfig = {
   timeout: 30000,
-  maxRetries: 3
+  maxRetries: 3,
 };
 
 function createTool(config: Partial<ToolConfig> = {}): Tool {
@@ -493,6 +531,7 @@ function createTool(config: Partial<ToolConfig> = {}): Tool {
 ## Quick Reference
 
 ### Key Files to Know
+
 - `PRD.md` - Product requirements and scope
 - `PIP.md` - Implementation phases and tasks
 - `flake.nix` - Nix development environment configuration
@@ -502,6 +541,7 @@ function createTool(config: Partial<ToolConfig> = {}): Tool {
 - `src/httpcraft/cli.ts` - HTTPCraft integration
 
 ### Development Priorities
+
 1. **Follow PIP.md phases** - Don't skip ahead
 2. **Check off completed tasks** - Mark tasks as done in PIP.md
 3. **Commit progress regularly** - Commit after each completed task
@@ -511,6 +551,7 @@ function createTool(config: Partial<ToolConfig> = {}): Tool {
 7. **Documentation** - Keep docs current
 
 ### When Stuck
+
 1. Check the PIP.md for current phase requirements
 2. Review the PRD.md for context and scope
 3. Look at similar patterns in the codebase

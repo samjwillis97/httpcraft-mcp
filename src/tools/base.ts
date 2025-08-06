@@ -54,33 +54,37 @@ export abstract class BaseTool {
     context: ToolExecutionContext = { timestamp: new Date() }
   ): Promise<ToolResult> {
     const startTime = Date.now();
-    
+
     try {
-      logger.debug(`Executing tool: ${this.name}`, { 
-        params, 
-        requestId: context.requestId 
+      logger.debug(`Executing tool: ${this.name}`, {
+        params,
+        requestId: context.requestId,
       });
 
       // Validate input parameters
       const validatedParams = this.validateInput(params);
-      
+
       // Execute the tool logic
       const result = await this.executeInternal(validatedParams, context);
-      
+
       const duration = Date.now() - startTime;
-      logger.debug(`Tool execution completed: ${this.name}`, { 
-        duration, 
-        requestId: context.requestId 
+      logger.debug(`Tool execution completed: ${this.name}`, {
+        duration,
+        requestId: context.requestId,
       });
 
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
-      logger.error(`Tool execution failed: ${this.name}`, { 
-        error: error instanceof Error ? error.message : String(error),
-        duration,
-        requestId: context.requestId 
-      }, error instanceof Error ? error : undefined);
+      logger.error(
+        `Tool execution failed: ${this.name}`,
+        {
+          error: error instanceof Error ? error.message : String(error),
+          duration,
+          requestId: context.requestId,
+        },
+        error instanceof Error ? error : undefined
+      );
 
       return this.formatError(error);
     }
@@ -135,11 +139,15 @@ export abstract class BaseTool {
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
-            error: true,
-            message,
-            timestamp: new Date().toISOString(),
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              error: true,
+              message,
+              timestamp: new Date().toISOString(),
+            },
+            null,
+            2
+          ),
           mimeType: 'application/json',
         },
       ],

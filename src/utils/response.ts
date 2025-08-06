@@ -14,13 +14,17 @@ export function formatHttpResponse(response: HttpCraftResponse): ToolResult {
     content: [
       {
         type: 'text',
-        text: JSON.stringify({
-          success: response.success,
-          statusCode: response.statusCode,
-          headers: response.headers,
-          data: response.data,
-          timing: response.timing,
-        }, null, 2),
+        text: JSON.stringify(
+          {
+            success: response.success,
+            statusCode: response.statusCode,
+            headers: response.headers,
+            data: response.data,
+            timing: response.timing,
+          },
+          null,
+          2
+        ),
         mimeType: 'application/json',
       },
     ],
@@ -36,19 +40,23 @@ export function formatChainResponse(response: ChainResponse): ToolResult {
     content: [
       {
         type: 'text',
-        text: JSON.stringify({
-          success: response.success,
-          totalSteps: response.steps.length,
-          successfulSteps: response.steps.filter(s => s.success).length,
-          failedStep: response.failedStep,
-          totalDuration: response.totalDuration,
-          steps: response.steps.map(step => ({
-            name: step.name,
-            success: step.success,
-            statusCode: step.response?.statusCode,
-            error: step.error,
-          })),
-        }, null, 2),
+        text: JSON.stringify(
+          {
+            success: response.success,
+            totalSteps: response.steps.length,
+            successfulSteps: response.steps.filter(s => s.success).length,
+            failedStep: response.failedStep,
+            totalDuration: response.totalDuration,
+            steps: response.steps.map(step => ({
+              name: step.name,
+              success: step.success,
+              statusCode: step.response?.statusCode,
+              error: step.error,
+            })),
+          },
+          null,
+          2
+        ),
         mimeType: 'application/json',
       },
     ],
@@ -64,11 +72,15 @@ export function formatDiscoveryResponse(response: DiscoveryResponse): ToolResult
     content: [
       {
         type: 'text',
-        text: JSON.stringify({
-          success: response.success,
-          data: response.data,
-          error: response.error,
-        }, null, 2),
+        text: JSON.stringify(
+          {
+            success: response.success,
+            data: response.data,
+            error: response.error,
+          },
+          null,
+          2
+        ),
         mimeType: 'application/json',
       },
     ],
@@ -88,17 +100,21 @@ export function formatErrorResponse(
   }
 ): ToolResult {
   const message = error instanceof Error ? error.message : error;
-  
+
   return {
     content: [
       {
         type: 'text',
-        text: JSON.stringify({
-          error: true,
-          message,
-          context,
-          timestamp: new Date().toISOString(),
-        }, null, 2),
+        text: JSON.stringify(
+          {
+            error: true,
+            message,
+            context,
+            timestamp: new Date().toISOString(),
+          },
+          null,
+          2
+        ),
         mimeType: 'application/json',
       },
     ],
@@ -126,7 +142,7 @@ export function formatTextResponse(text: string, isError = false): ToolResult {
  */
 export function formatDataResponse(data: any, isError = false): ToolResult {
   const text = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
-  
+
   return {
     content: [
       {
@@ -147,13 +163,17 @@ export function formatValidationError(errors: string[]): ToolResult {
     content: [
       {
         type: 'text',
-        text: JSON.stringify({
-          error: true,
-          type: 'ValidationError',
-          message: 'Parameter validation failed',
-          details: errors,
-          timestamp: new Date().toISOString(),
-        }, null, 2),
+        text: JSON.stringify(
+          {
+            error: true,
+            type: 'ValidationError',
+            message: 'Parameter validation failed',
+            details: errors,
+            timestamp: new Date().toISOString(),
+          },
+          null,
+          2
+        ),
         mimeType: 'application/json',
       },
     ],
@@ -173,15 +193,19 @@ export function formatHttpCraftError(
     content: [
       {
         type: 'text',
-        text: JSON.stringify({
-          error: true,
-          type: 'HttpCraftError',
-          message: 'HTTPCraft command failed',
-          stderr,
-          exitCode,
-          command,
-          timestamp: new Date().toISOString(),
-        }, null, 2),
+        text: JSON.stringify(
+          {
+            error: true,
+            type: 'HttpCraftError',
+            message: 'HTTPCraft command failed',
+            stderr,
+            exitCode,
+            command,
+            timestamp: new Date().toISOString(),
+          },
+          null,
+          2
+        ),
         mimeType: 'application/json',
       },
     ],
@@ -194,12 +218,7 @@ export function formatHttpCraftError(
  */
 export function extractHttpCraftError(stderr: string): string {
   // Common HTTPCraft error patterns
-  const patterns = [
-    /Error: (.+)/,
-    /error: (.+)/i,
-    /failed: (.+)/i,
-    /(.+): command not found/,
-  ];
+  const patterns = [/Error: (.+)/, /error: (.+)/i, /failed: (.+)/i, /(.+): command not found/];
 
   for (const pattern of patterns) {
     const match = stderr.match(pattern);

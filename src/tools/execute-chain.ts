@@ -4,14 +4,24 @@
  */
 
 import { BaseTool, type ToolResult, type ToolExecutionContext } from './base.js';
-import { ExecuteChainSchema, type ExecuteChainParams, type ChainResponse, type ChainStep } from '../schemas/tools.js';
-import { formatChainResponse, formatHttpCraftError, extractHttpCraftError } from '../utils/response.js';
+import {
+  ExecuteChainSchema,
+  type ExecuteChainParams,
+  type ChainResponse,
+  type ChainStep,
+} from '../schemas/tools.js';
+import {
+  formatChainResponse,
+  formatHttpCraftError,
+  extractHttpCraftError,
+} from '../utils/response.js';
 import { logger } from '../utils/logger.js';
 import type { HttpCraftCli } from '../httpcraft/cli.js';
 
 export class ExecuteChainTool extends BaseTool {
   public readonly name = 'httpcraft_execute_chain';
-  public readonly description = 'Execute a request chain using HTTPCraft with variable passing between steps';
+  public readonly description =
+    'Execute a request chain using HTTPCraft with variable passing between steps';
   public readonly inputSchema = ExecuteChainSchema;
 
   constructor(httpcraft: HttpCraftCli) {
@@ -46,12 +56,8 @@ export class ExecuteChainTool extends BaseTool {
         error: result.error?.message,
         requestId: context.requestId,
       });
-      
-      return formatHttpCraftError(
-        result.error?.message || 'Unknown error',
-        -1,
-        args
-      );
+
+      return formatHttpCraftError(result.error?.message || 'Unknown error', -1, args);
     }
 
     const httpcraftResult = result.data;
@@ -65,11 +71,7 @@ export class ExecuteChainTool extends BaseTool {
         requestId: context.requestId,
       });
 
-      return formatHttpCraftError(
-        httpcraftResult.stderr,
-        httpcraftResult.exitCode,
-        args
-      );
+      return formatHttpCraftError(httpcraftResult.stderr, httpcraftResult.exitCode, args);
     }
 
     // Parse and format the chain response
@@ -139,15 +141,15 @@ export class ExecuteChainTool extends BaseTool {
    * Parse and format the chain response using the enhanced parser
    */
   private async parseAndFormatChainResponse(
-    httpcraftResult: any, 
+    httpcraftResult: any,
     context: ToolExecutionContext,
     startTime: number
   ): Promise<ToolResult> {
     const { ResponseParser } = await import('../httpcraft/parser.js');
     const parser = new ResponseParser();
-    
+
     const parseResult = parser.parseHttpCraftOutput(httpcraftResult.stdout);
-    
+
     if (!parseResult.success) {
       logger.error('Failed to parse HTTPCraft chain output', {
         error: parseResult.error?.message,
@@ -160,10 +162,10 @@ export class ExecuteChainTool extends BaseTool {
     }
 
     const rawResponse = parseResult.data;
-    
+
     // Transform raw response into ChainResponse format
     const chainResponse = this.transformToChainResponse(rawResponse, startTime);
-    
+
     // Validate the parsed response
     const validation = this.validateChainResponse(chainResponse);
     if (!validation.valid) {

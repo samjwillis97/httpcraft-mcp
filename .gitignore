@@ -102,3 +102,6 @@ config.local.*
 
 # direnv
 .envrc.local
+
+# Pre-commit hooks (generated automatically)
+.pre-commit-config.yaml
