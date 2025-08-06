@@ -240,7 +240,7 @@ expect(malformed.error).toContain('Invalid JSON');
 - [x] Response parsing handles JSON and non-JSON correctly
 - [x] Error scenarios are handled gracefully
 - [x] All tools are properly registered and discoverable
-- [ ] Comprehensive test coverage (>80%)
+- [x] Comprehensive test coverage (>80%)
 
 ---
 
@@ -251,11 +251,11 @@ expect(malformed.error).toContain('Invalid JSON');
 
 ### Phase 3.1: Request Chain Execution
 **Tasks**:
-- [ ] Implement `httpcraft_execute_chain` tool
-- [ ] Handle chain configuration and validation
-- [ ] Support variable passing between requests
-- [ ] Add partial failure handling
-- [ ] Implement chain result aggregation
+- [x] Implement `httpcraft_execute_chain` tool
+- [x] Handle chain configuration and validation
+- [x] Support variable passing between requests
+- [x] Add partial failure handling
+- [x] Implement chain result aggregation
 
 **Deliverables**:
 - `src/tools/execute-chain.ts` - Chain execution tool

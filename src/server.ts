@@ -15,6 +15,7 @@ import { HttpCraftCli } from './httpcraft/cli-simple.js';
 import { toolRegistry } from './tools/registry.js';
 import { ExecuteApiTool } from './tools/execute-api.js';
 import { ExecuteRequestTool } from './tools/execute-request.js';
+import { ExecuteChainTool } from './tools/execute-chain.js';
 
 class HttpCraftMcpServer {
   private readonly server: Server;
@@ -65,6 +66,7 @@ class HttpCraftMcpServer {
     try {
       toolRegistry.register(new ExecuteApiTool(httpCraftCli));
       toolRegistry.register(new ExecuteRequestTool(httpCraftCli));
+      toolRegistry.register(new ExecuteChainTool(httpCraftCli));
       
       logger.info('Tools registered successfully', {
         toolCount: toolRegistry.getToolCount(),

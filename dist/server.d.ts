@@ -11,6 +11,7 @@ declare class HttpCraftMcpServer {
     private readonly httpCraft;
     private isShuttingDown;
     constructor(config?: Partial<ServerConfig>);
+    private setupTools;
     private setupHandlers;
     private handleHealthCheck;
     private getHealthStatus;

@@ -104,6 +104,9 @@ export const ExecuteChainSchema = z.object({
   profile: z.string().optional()
     .describe('Optional profile to use for the chain'),
   
+  environment: z.string().optional()
+    .describe('Optional environment override'),
+  
   variables: VariablesSchema,
   
   configPath: ConfigPathSchema,
@@ -113,6 +116,9 @@ export const ExecuteChainSchema = z.object({
   
   stopOnFailure: z.boolean().optional()
     .describe('Whether to stop chain execution on first failure'),
+  
+  parallel: z.boolean().optional()
+    .describe('Whether to execute chain steps in parallel where possible'),
 });
 
 /**
@@ -172,7 +178,7 @@ export const ChainResponseSchema = z.object({
     response: HttpCraftResponseSchema.optional(),
     error: z.string().optional(),
   })),
-  failedStep: z.string().optional(),
+  failedStep: z.number().optional(),
   totalDuration: z.number(),
 });
 
@@ -195,4 +201,5 @@ export type ListProfilesParams = z.infer<typeof ListProfilesSchema>;
 export type ListChainsParams = z.infer<typeof ListChainsSchema>;
 export type HttpCraftResponse = z.infer<typeof HttpCraftResponseSchema>;
 export type ChainResponse = z.infer<typeof ChainResponseSchema>;
+export type ChainStep = ChainResponse['steps'][number];
 export type DiscoveryResponse = z.infer<typeof DiscoveryResponseSchema>;

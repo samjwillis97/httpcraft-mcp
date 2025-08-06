@@ -23,10 +23,12 @@ export interface LogEntry {
     readonly context?: Record<string, unknown> | undefined;
     readonly error?: Error | undefined;
 }
-export interface Result<T, E = Error> {
-    readonly success: boolean;
-    readonly data?: T | undefined;
-    readonly error?: E | undefined;
-}
+export type Result<T, E = Error> = {
+    readonly success: true;
+    readonly data: T;
+} | {
+    readonly success: false;
+    readonly error: E;
+};
 export type AsyncResult<T, E = Error> = Promise<Result<T, E>>;
 //# sourceMappingURL=index.d.ts.map
