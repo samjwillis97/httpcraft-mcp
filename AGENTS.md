@@ -313,6 +313,10 @@ Examples:
 4. `npm run type-check` - TypeScript type checking passes
 5. `npm run test` - All tests pass
 
+**Pre-commit Hooks**: This project uses git-hooks.nix to automatically enforce quality checks on every commit. Pre-commit hooks will run all the above checks and prevent commits that don't meet quality standards. If hooks fail, fix the issues and commit again.
+
+**Current Project Status**: Note that the project currently has some existing linting, type checking, and test configuration issues that need to be resolved before pre-commit hooks will pass. These should be addressed as part of the development workflow.
+
 **Pre-commit Workflow**: Before committing any changes, ensure all quality checks pass. This maintains code quality and prevents broken builds from being committed to the repository.
 
 ## Performance Guidelines
