@@ -153,6 +153,28 @@ export const ListChainsSchema = z.object({
 });
 
 /**
+ * Schemas for describe tools
+ */
+export const DescribeApiSchema = z.object({
+  name: z.string().min(1, 'API name cannot be empty').describe('API name to describe'),
+  configPath: ConfigPathSchema,
+});
+
+export const DescribeEndpointSchema = z.object({
+  api: z.string().min(1, 'API name cannot be empty').describe('API name'),
+  endpoint: z
+    .string()
+    .min(1, 'Endpoint name cannot be empty')
+    .describe('Endpoint name to describe'),
+  configPath: ConfigPathSchema,
+});
+
+export const DescribeProfileSchema = z.object({
+  name: z.string().min(1, 'Profile name cannot be empty').describe('Profile name to describe'),
+  configPath: ConfigPathSchema,
+});
+
+/**
  * Schema for health check tool
  */
 export const HealthCheckSchema = z.object({});
@@ -211,6 +233,9 @@ export type ListApisParams = z.infer<typeof ListApisSchema>;
 export type ListEndpointsParams = z.infer<typeof ListEndpointsSchema>;
 export type ListProfilesParams = z.infer<typeof ListProfilesSchema>;
 export type ListChainsParams = z.infer<typeof ListChainsSchema>;
+export type DescribeApiParams = z.infer<typeof DescribeApiSchema>;
+export type DescribeEndpointParams = z.infer<typeof DescribeEndpointSchema>;
+export type DescribeProfileParams = z.infer<typeof DescribeProfileSchema>;
 export type HttpCraftResponse = z.infer<typeof HttpCraftResponseSchema>;
 export type ChainResponse = z.infer<typeof ChainResponseSchema>;
 export type ChainStep = ChainResponse['steps'][number];

@@ -4,7 +4,14 @@
  */
 
 import { describe, beforeEach, it, expect, jest } from '@jest/globals';
-import { ListApisTool, ListEndpointsTool, ListProfilesTool } from '../../src/tools/discovery.js';
+import {
+  ListApisTool,
+  ListEndpointsTool,
+  ListProfilesTool,
+  DescribeApiTool,
+  DescribeEndpointTool,
+  DescribeProfileTool,
+} from '../../src/tools/discovery.js';
 import type { HttpCraftCli } from '../../src/httpcraft/cli.js';
 
 // Mock logger
@@ -31,6 +38,13 @@ describe('Discovery Tools', () => {
       isAvailable: jest.fn(),
       getConfig: jest.fn(),
       clearCache: jest.fn(),
+      // New CLI methods
+      listApis: jest.fn(),
+      listEndpoints: jest.fn(),
+      listProfiles: jest.fn(),
+      describeApi: jest.fn(),
+      describeEndpoint: jest.fn(),
+      describeProfile: jest.fn(),
     } as any;
   });
 
@@ -48,7 +62,7 @@ describe('Discovery Tools', () => {
 
     it('should execute successfully and return API list', async () => {
       const mockApis = ['github', 'slack', 'stripe'];
-      mockHttpCraft.executeWithTextOutput.mockResolvedValue({
+      mockHttpCraft.listApis.mockResolvedValue({
         success: true,
         data: mockApis,
       });
@@ -65,13 +79,11 @@ describe('Discovery Tools', () => {
       expect(response.apis).toEqual(mockApis);
       expect(response.timestamp).toBeDefined();
 
-      expect(mockHttpCraft.executeWithTextOutput).toHaveBeenCalledWith(['--get-api-names'], {
-        timeout: 30000,
-      });
+      expect(mockHttpCraft.listApis).toHaveBeenCalledWith(undefined);
     });
 
     it('should handle HTTPCraft errors gracefully', async () => {
-      mockHttpCraft.executeWithTextOutput.mockResolvedValue({
+      mockHttpCraft.listApis.mockResolvedValue({
         success: false,
         error: new Error('Configuration file not found'),
       });
@@ -87,7 +99,7 @@ describe('Discovery Tools', () => {
     });
 
     it('should pass config path parameter', async () => {
-      mockHttpCraft.executeWithTextOutput.mockResolvedValue({
+      mockHttpCraft.listApis.mockResolvedValue({
         success: true,
         data: [],
       });
@@ -95,10 +107,7 @@ describe('Discovery Tools', () => {
       const configPath = '/custom/config.yaml';
       await tool.execute({ configPath });
 
-      expect(mockHttpCraft.executeWithTextOutput).toHaveBeenCalledWith(
-        ['--get-api-names', '--config', configPath],
-        { timeout: 30000 }
-      );
+      expect(mockHttpCraft.listApis).toHaveBeenCalledWith(configPath);
     });
   });
 
@@ -118,7 +127,7 @@ describe('Discovery Tools', () => {
       const mockEndpoints = ['users', 'repos', 'issues'];
       const apiName = 'github';
 
-      mockHttpCraft.executeWithTextOutput.mockResolvedValue({
+      mockHttpCraft.listEndpoints.mockResolvedValue({
         success: true,
         data: mockEndpoints,
       });
@@ -136,14 +145,11 @@ describe('Discovery Tools', () => {
       expect(response.endpoints).toEqual(mockEndpoints);
       expect(response.timestamp).toBeDefined();
 
-      expect(mockHttpCraft.executeWithTextOutput).toHaveBeenCalledWith(
-        ['--get-endpoint-names', apiName],
-        { timeout: 30000 }
-      );
+      expect(mockHttpCraft.listEndpoints).toHaveBeenCalledWith(apiName, undefined);
     });
 
     it('should handle HTTPCraft errors gracefully', async () => {
-      mockHttpCraft.executeWithTextOutput.mockResolvedValue({
+      mockHttpCraft.listEndpoints.mockResolvedValue({
         success: false,
         error: new Error('API not found'),
       });
@@ -167,7 +173,7 @@ describe('Discovery Tools', () => {
     });
 
     it('should pass config path parameter', async () => {
-      mockHttpCraft.executeWithTextOutput.mockResolvedValue({
+      mockHttpCraft.listEndpoints.mockResolvedValue({
         success: true,
         data: [],
       });
@@ -176,10 +182,7 @@ describe('Discovery Tools', () => {
       const apiName = 'test-api';
       await tool.execute({ api: apiName, configPath });
 
-      expect(mockHttpCraft.executeWithTextOutput).toHaveBeenCalledWith(
-        ['--get-endpoint-names', apiName, '--config', configPath],
-        { timeout: 30000 }
-      );
+      expect(mockHttpCraft.listEndpoints).toHaveBeenCalledWith(apiName, configPath);
     });
   });
 
@@ -197,7 +200,7 @@ describe('Discovery Tools', () => {
 
     it('should execute successfully and return profile list', async () => {
       const mockProfiles = ['dev', 'staging', 'prod'];
-      mockHttpCraft.executeWithTextOutput.mockResolvedValue({
+      mockHttpCraft.listProfiles.mockResolvedValue({
         success: true,
         data: mockProfiles,
       });
@@ -214,13 +217,11 @@ describe('Discovery Tools', () => {
       expect(response.profiles).toEqual(mockProfiles);
       expect(response.timestamp).toBeDefined();
 
-      expect(mockHttpCraft.executeWithTextOutput).toHaveBeenCalledWith(['--get-profile-names'], {
-        timeout: 30000,
-      });
+      expect(mockHttpCraft.listProfiles).toHaveBeenCalledWith(undefined);
     });
 
     it('should handle HTTPCraft errors gracefully', async () => {
-      mockHttpCraft.executeWithTextOutput.mockResolvedValue({
+      mockHttpCraft.listProfiles.mockResolvedValue({
         success: false,
         error: new Error('No profiles configured'),
       });
@@ -236,7 +237,7 @@ describe('Discovery Tools', () => {
     });
 
     it('should pass config path parameter', async () => {
-      mockHttpCraft.executeWithTextOutput.mockResolvedValue({
+      mockHttpCraft.listProfiles.mockResolvedValue({
         success: true,
         data: [],
       });
@@ -244,10 +245,7 @@ describe('Discovery Tools', () => {
       const configPath = '/custom/config.yaml';
       await tool.execute({ configPath });
 
-      expect(mockHttpCraft.executeWithTextOutput).toHaveBeenCalledWith(
-        ['--get-profile-names', '--config', configPath],
-        { timeout: 30000 }
-      );
+      expect(mockHttpCraft.listProfiles).toHaveBeenCalledWith(configPath);
     });
   });
 
@@ -292,6 +290,132 @@ describe('Discovery Tools', () => {
       expect(profilesDefinition.name).toBe('httpcraft_list_profiles');
       expect(profilesDefinition.description).toBeDefined();
       expect(profilesDefinition.inputSchema).toBeDefined();
+    });
+  });
+
+  describe('DescribeApiTool', () => {
+    let tool: DescribeApiTool;
+
+    beforeEach(() => {
+      tool = new DescribeApiTool(mockHttpCraft);
+    });
+
+    it('should have correct name and description', () => {
+      expect(tool.name).toBe('httpcraft_describe_api');
+      expect(tool.description).toBe('Get detailed information about a specific API');
+    });
+
+    it('should execute successfully and return API description', async () => {
+      const mockApiDescription = {
+        name: 'github',
+        base_url: 'https://api.github.com',
+        description: 'GitHub REST API',
+        endpoints: { users: { method: 'GET', path: '/users' } },
+      };
+
+      mockHttpCraft.describeApi.mockResolvedValue({
+        success: true,
+        data: mockApiDescription,
+      });
+
+      const result = await tool.execute({ name: 'github' });
+
+      expect(result.isError).toBe(false);
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].type).toBe('text');
+
+      const response = JSON.parse((result.content[0] as any).text);
+      expect(response.success).toBe(true);
+      expect(response.api).toEqual(mockApiDescription);
+      expect(response.timestamp).toBeDefined();
+
+      expect(mockHttpCraft.describeApi).toHaveBeenCalledWith('github', undefined);
+    });
+
+    it('should handle API not found errors', async () => {
+      mockHttpCraft.describeApi.mockResolvedValue({
+        success: false,
+        error: new Error('API not found'),
+      });
+
+      const result = await tool.execute({ name: 'nonexistent' });
+
+      expect(result.isError).toBe(true);
+      const response = JSON.parse(result.content[0].text!);
+      expect(response.message).toContain('Failed to describe API "nonexistent"');
+    });
+  });
+
+  describe('DescribeEndpointTool', () => {
+    let tool: DescribeEndpointTool;
+
+    beforeEach(() => {
+      tool = new DescribeEndpointTool(mockHttpCraft);
+    });
+
+    it('should have correct name and description', () => {
+      expect(tool.name).toBe('httpcraft_describe_endpoint');
+      expect(tool.description).toBe('Get detailed information about a specific endpoint');
+    });
+
+    it('should execute successfully and return endpoint description', async () => {
+      const mockEndpointDescription = {
+        name: 'users',
+        api: 'github',
+        method: 'GET',
+        path: '/users',
+        description: 'List users',
+      };
+
+      mockHttpCraft.describeEndpoint.mockResolvedValue({
+        success: true,
+        data: mockEndpointDescription,
+      });
+
+      const result = await tool.execute({ api: 'github', endpoint: 'users' });
+
+      expect(result.isError).toBe(false);
+      const response = JSON.parse((result.content[0] as any).text);
+      expect(response.success).toBe(true);
+      expect(response.endpoint).toEqual(mockEndpointDescription);
+
+      expect(mockHttpCraft.describeEndpoint).toHaveBeenCalledWith('github', 'users', undefined);
+    });
+  });
+
+  describe('DescribeProfileTool', () => {
+    let tool: DescribeProfileTool;
+
+    beforeEach(() => {
+      tool = new DescribeProfileTool(mockHttpCraft);
+    });
+
+    it('should have correct name and description', () => {
+      expect(tool.name).toBe('httpcraft_describe_profile');
+      expect(tool.description).toBe('Get detailed information about a specific profile');
+    });
+
+    it('should execute successfully and return profile description', async () => {
+      const mockProfileDescription = {
+        name: 'dev',
+        description: 'Development environment',
+        variables: { api_base: 'https://dev-api.example.com' },
+        timeout: 30,
+      };
+
+      mockHttpCraft.describeProfile.mockResolvedValue({
+        success: true,
+        data: mockProfileDescription,
+      });
+
+      const result = await tool.execute({ name: 'dev' });
+
+      expect(result.isError).toBe(false);
+      const response = JSON.parse((result.content[0] as any).text);
+      expect(response.success).toBe(true);
+      expect(response.profile).toEqual(mockProfileDescription);
+
+      expect(mockHttpCraft.describeProfile).toHaveBeenCalledWith('dev', undefined);
     });
   });
 });

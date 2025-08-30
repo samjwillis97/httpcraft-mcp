@@ -16,7 +16,14 @@ import { toolRegistry } from './tools/registry.js';
 import { ExecuteApiTool } from './tools/execute-api.js';
 import { ExecuteRequestTool } from './tools/execute-request.js';
 import { ExecuteChainTool } from './tools/execute-chain.js';
-import { ListApisTool, ListEndpointsTool, ListProfilesTool } from './tools/discovery.js';
+import {
+  ListApisTool,
+  ListEndpointsTool,
+  ListProfilesTool,
+  DescribeApiTool,
+  DescribeEndpointTool,
+  DescribeProfileTool,
+} from './tools/discovery.js';
 
 class HttpCraftMcpServer {
   private readonly server: Server;
@@ -69,6 +76,11 @@ class HttpCraftMcpServer {
       toolRegistry.register(new ListApisTool(this.httpCraft));
       toolRegistry.register(new ListEndpointsTool(this.httpCraft));
       toolRegistry.register(new ListProfilesTool(this.httpCraft));
+
+      // Register describe tools
+      toolRegistry.register(new DescribeApiTool(this.httpCraft));
+      toolRegistry.register(new DescribeEndpointTool(this.httpCraft));
+      toolRegistry.register(new DescribeProfileTool(this.httpCraft));
 
       logger.info('Tools registered successfully', {
         toolCount: toolRegistry.getToolCount(),

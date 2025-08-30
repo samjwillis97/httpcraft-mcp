@@ -9,9 +9,15 @@ import {
   ListApisSchema,
   ListEndpointsSchema,
   ListProfilesSchema,
+  DescribeApiSchema,
+  DescribeEndpointSchema,
+  DescribeProfileSchema,
   type ListApisParams,
   type ListEndpointsParams,
   type ListProfilesParams,
+  type DescribeApiParams,
+  type DescribeEndpointParams,
+  type DescribeProfileParams,
 } from '../schemas/tools.js';
 import { logger } from '../utils/logger.js';
 import type { HttpCraftCli } from '../httpcraft/cli.js';
@@ -38,13 +44,8 @@ export class ListApisTool extends BaseTool {
       requestId: context.requestId,
     });
 
-    // Build HTTPCraft command arguments
-    const args = this.buildListApisArgs(params);
-
-    // Execute HTTPCraft command
-    const result = await this.httpcraft.executeWithTextOutput(args, {
-      timeout: context.timeout || 30000,
-    });
+    // Use the new HTTPCraft list apis command
+    const result = await this.httpcraft.listApis(params.configPath);
 
     if (!result.success) {
       logger.error('Failed to list APIs', {
@@ -65,17 +66,6 @@ export class ListApisTool extends BaseTool {
       apis: result.data,
       timestamp: new Date().toISOString(),
     });
-  }
-
-  private buildListApisArgs(params: ListApisParams): string[] {
-    const args: string[] = ['--get-api-names'];
-
-    // Config path (if specified)
-    if (params.configPath) {
-      args.push('--config', params.configPath);
-    }
-
-    return args;
   }
 }
 
@@ -102,13 +92,8 @@ export class ListEndpointsTool extends BaseTool {
       requestId: context.requestId,
     });
 
-    // Build HTTPCraft command arguments
-    const args = this.buildListEndpointsArgs(params);
-
-    // Execute HTTPCraft command
-    const result = await this.httpcraft.executeWithTextOutput(args, {
-      timeout: context.timeout || 30000,
-    });
+    // Use the new HTTPCraft list endpoints command
+    const result = await this.httpcraft.listEndpoints(params.api, params.configPath);
 
     if (!result.success) {
       logger.error('Failed to list endpoints', {
@@ -135,20 +120,6 @@ export class ListEndpointsTool extends BaseTool {
       timestamp: new Date().toISOString(),
     });
   }
-
-  private buildListEndpointsArgs(params: ListEndpointsParams): string[] {
-    const args: string[] = ['--get-endpoint-names'];
-
-    // API name
-    args.push(params.api);
-
-    // Config path (if specified)
-    if (params.configPath) {
-      args.push('--config', params.configPath);
-    }
-
-    return args;
-  }
 }
 
 /**
@@ -173,13 +144,8 @@ export class ListProfilesTool extends BaseTool {
       requestId: context.requestId,
     });
 
-    // Build HTTPCraft command arguments
-    const args = this.buildListProfilesArgs(params);
-
-    // Execute HTTPCraft command
-    const result = await this.httpcraft.executeWithTextOutput(args, {
-      timeout: context.timeout || 30000,
-    });
+    // Use the new HTTPCraft list profiles command
+    const result = await this.httpcraft.listProfiles(params.configPath);
 
     if (!result.success) {
       logger.error('Failed to list profiles', {
@@ -201,15 +167,166 @@ export class ListProfilesTool extends BaseTool {
       timestamp: new Date().toISOString(),
     });
   }
+}
 
-  private buildListProfilesArgs(params: ListProfilesParams): string[] {
-    const args: string[] = ['--get-profile-names'];
+/**
+ * Describe API Tool
+ * Provides detailed information about a specific API
+ */
+export class DescribeApiTool extends BaseTool {
+  public readonly name = 'httpcraft_describe_api';
+  public readonly description = 'Get detailed information about a specific API';
+  public readonly inputSchema = DescribeApiSchema;
 
-    // Config path (if specified)
-    if (params.configPath) {
-      args.push('--config', params.configPath);
+  constructor(httpcraft: HttpCraftCli) {
+    super(httpcraft);
+  }
+
+  protected async executeInternal(
+    params: DescribeApiParams,
+    context: ToolExecutionContext
+  ): Promise<CallToolResult> {
+    logger.debug('Describing API', {
+      name: params.name,
+      configPath: params.configPath,
+      requestId: context.requestId,
+    });
+
+    // Use the new HTTPCraft describe api command
+    const result = await this.httpcraft.describeApi(params.name, params.configPath);
+
+    if (!result.success) {
+      logger.error('Failed to describe API', {
+        name: params.name,
+        error: result.error?.message,
+        requestId: context.requestId,
+      });
+
+      return this.formatError(
+        new Error(`Failed to describe API "${params.name}": ${result.error?.message}`)
+      );
     }
 
-    return args;
+    logger.debug('Successfully described API', {
+      name: params.name,
+      requestId: context.requestId,
+    });
+
+    return this.formatSuccess({
+      success: true,
+      api: result.data,
+      timestamp: new Date().toISOString(),
+    });
+  }
+}
+
+/**
+ * Describe Endpoint Tool
+ * Provides detailed information about a specific endpoint
+ */
+export class DescribeEndpointTool extends BaseTool {
+  public readonly name = 'httpcraft_describe_endpoint';
+  public readonly description = 'Get detailed information about a specific endpoint';
+  public readonly inputSchema = DescribeEndpointSchema;
+
+  constructor(httpcraft: HttpCraftCli) {
+    super(httpcraft);
+  }
+
+  protected async executeInternal(
+    params: DescribeEndpointParams,
+    context: ToolExecutionContext
+  ): Promise<CallToolResult> {
+    logger.debug('Describing endpoint', {
+      api: params.api,
+      endpoint: params.endpoint,
+      configPath: params.configPath,
+      requestId: context.requestId,
+    });
+
+    // Use the new HTTPCraft describe endpoint command
+    const result = await this.httpcraft.describeEndpoint(
+      params.api,
+      params.endpoint,
+      params.configPath
+    );
+
+    if (!result.success) {
+      logger.error('Failed to describe endpoint', {
+        api: params.api,
+        endpoint: params.endpoint,
+        error: result.error?.message,
+        requestId: context.requestId,
+      });
+
+      return this.formatError(
+        new Error(
+          `Failed to describe endpoint "${params.api}.${params.endpoint}": ${result.error?.message}`
+        )
+      );
+    }
+
+    logger.debug('Successfully described endpoint', {
+      api: params.api,
+      endpoint: params.endpoint,
+      requestId: context.requestId,
+    });
+
+    return this.formatSuccess({
+      success: true,
+      endpoint: result.data,
+      timestamp: new Date().toISOString(),
+    });
+  }
+}
+
+/**
+ * Describe Profile Tool
+ * Provides detailed information about a specific profile
+ */
+export class DescribeProfileTool extends BaseTool {
+  public readonly name = 'httpcraft_describe_profile';
+  public readonly description = 'Get detailed information about a specific profile';
+  public readonly inputSchema = DescribeProfileSchema;
+
+  constructor(httpcraft: HttpCraftCli) {
+    super(httpcraft);
+  }
+
+  protected async executeInternal(
+    params: DescribeProfileParams,
+    context: ToolExecutionContext
+  ): Promise<CallToolResult> {
+    logger.debug('Describing profile', {
+      name: params.name,
+      configPath: params.configPath,
+      requestId: context.requestId,
+    });
+
+    // Use the new HTTPCraft describe profile command
+    const result = await this.httpcraft.describeProfile(params.name, params.configPath);
+
+    if (!result.success) {
+      logger.error('Failed to describe profile', {
+        name: params.name,
+        error: result.error?.message,
+        requestId: context.requestId,
+      });
+
+      return this.formatError(
+        new Error(`Failed to describe profile "${params.name}": ${result.error?.message}`)
+      );
+    }
+
+    logger.debug('Successfully described profile', {
+      name: params.name,
+      requestId: context.requestId,
+    });
+
+    return this.formatSuccess({
+      success: true,
+      profile: result.data,
+      timestamp: new Date().toISOString(),
+    });
   }
 }
