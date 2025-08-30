@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import { logger } from '../utils/logger.js';
-import type { AsyncResult } from '../types/index.js';
+import type { AsyncResult, Result } from '../types/index.js';
 import type { HttpCraftResponse } from '../schemas/tools.js';
 
 export interface ParsedResponse {
@@ -29,22 +29,22 @@ export interface HttpCraftOutput {
 
 // Schema for validating HTTPCraft JSON output
 const HttpCraftJsonOutputSchema = z.object({
-  status: z.number().optional(),
-  statusCode: z.number().optional(),
+  status: z.number().nullable().optional(),
+  statusCode: z.number().nullable().optional(),
   headers: z.record(z.string()).optional(),
   body: z.any().optional(),
   data: z.any().optional(),
   response: z.any().optional(),
-  duration: z.number().optional(),
-  totalTime: z.number().optional(),
+  duration: z.number().nullable().optional(),
+  totalTime: z.number().nullable().optional(),
   timing: z
     .object({
-      dns: z.number().optional(),
-      connect: z.number().optional(),
-      ssl: z.number().optional(),
-      send: z.number().optional(),
-      wait: z.number().optional(),
-      receive: z.number().optional(),
+      dns: z.number().nullable().optional(),
+      connect: z.number().nullable().optional(),
+      ssl: z.number().nullable().optional(),
+      send: z.number().nullable().optional(),
+      wait: z.number().nullable().optional(),
+      receive: z.number().nullable().optional(),
     })
     .optional(),
 });
@@ -128,10 +128,10 @@ export class ResponseParser {
   /**
    * Parse HTTPCraft CLI output into structured response (new method)
    */
-  public async parseHttpCraftOutput(
+  public parseHttpCraftOutput(
     stdout: string,
     options: ParseOptions = {}
-  ): AsyncResult<HttpCraftResponse> {
+  ): Result<HttpCraftResponse> {
     const opts = { ...this.defaultOptions, ...options };
 
     // Check response size limit
@@ -150,7 +150,7 @@ export class ResponseParser {
     }
 
     // Try JSON parsing first
-    const jsonResult = await this.parseJsonOutput(stdout, opts.validateJson);
+    const jsonResult = this.parseJsonOutput(stdout, opts.validateJson);
     if (jsonResult.success) {
       return { success: true, data: jsonResult.data };
     }
@@ -163,7 +163,7 @@ export class ResponseParser {
   /**
    * Parse HTTPCraft JSON output
    */
-  private async parseJsonOutput(stdout: string, validate: boolean): AsyncResult<HttpCraftResponse> {
+  private parseJsonOutput(stdout: string, validate: boolean): Result<HttpCraftResponse> {
     try {
       const jsonOutput = JSON.parse(stdout);
 
@@ -183,22 +183,24 @@ export class ResponseParser {
 
       const parsed = jsonOutput as HttpCraftJsonOutput;
 
+      const statusCodeValue = parsed.status ?? parsed.statusCode;
+      const responseData = this.extractResponseData(parsed);
+
       const response: HttpCraftResponse = {
         success: true,
-        statusCode: parsed.status || parsed.statusCode,
+        statusCode: statusCodeValue === null ? undefined : statusCodeValue,
         headers: this.normalizeHeaders(parsed.headers || {}),
-        data: this.extractResponseData(parsed),
+        data: responseData,
         timing: {
           total: parsed.duration || parsed.totalTime || 0,
-          dns: parsed.timing?.dns,
-          connect: parsed.timing?.connect,
-          ssl: parsed.timing?.ssl,
-          send: parsed.timing?.send,
-          wait: parsed.timing?.wait,
-          receive: parsed.timing?.receive,
+          dns: parsed.timing?.dns === null ? undefined : parsed.timing?.dns,
+          connect: parsed.timing?.connect === null ? undefined : parsed.timing?.connect,
+          ssl: parsed.timing?.ssl === null ? undefined : parsed.timing?.ssl,
+          send: parsed.timing?.send === null ? undefined : parsed.timing?.send,
+          wait: parsed.timing?.wait === null ? undefined : parsed.timing?.wait,
+          receive: parsed.timing?.receive === null ? undefined : parsed.timing?.receive,
         },
       };
-
       return { success: true, data: response };
     } catch (parseError) {
       logger.debug('Failed to parse HTTPCraft JSON output', {
@@ -291,9 +293,21 @@ export class ResponseParser {
     // Try to find JSON in the output
     for (const line of lines) {
       const trimmed = line.trim();
+
+      // Check for direct JSON
       if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
         try {
           return JSON.parse(trimmed);
+        } catch {
+          // Continue searching
+        }
+      }
+
+      // Check for patterns like "Array: [...]" or "Object: {...}"
+      const colonMatch = trimmed.match(/^(Array|Object):\s*([{\[].*[}\]])$/);
+      if (colonMatch) {
+        try {
+          return JSON.parse(colonMatch[2] || '');
         } catch {
           // Continue searching
         }
@@ -310,6 +324,16 @@ export class ResponseParser {
       }
     }
 
+    // Try to find array in the output
+    const arrayMatch = output.match(/\[[\s\S]*\]/);
+    if (arrayMatch) {
+      try {
+        return JSON.parse(arrayMatch[0]);
+      } catch {
+        // Fall through to return raw text
+      }
+    }
+
     // If no JSON found, return the entire output
     return output;
   }
@@ -319,10 +343,15 @@ export class ResponseParser {
    */
   private extractResponseData(parsed: HttpCraftJsonOutput): any {
     // Priority: body > data > response
-    return parsed.body ?? parsed.data ?? parsed.response;
-  }
-
-  /**
+    // Handle the case where data is explicitly null vs undefined
+    if (parsed.body !== undefined) {
+      return parsed.body;
+    }
+    if (parsed.data !== undefined) {
+      return parsed.data; // This preserves null if it's explicitly null
+    }
+    return parsed.response;
+  } /**
    * Normalize header names to lowercase
    */
   private normalizeHeaders(headers: Record<string, string>): Record<string, string> {
@@ -379,6 +408,10 @@ export class ResponseParser {
       for (const [key, value] of Object.entries(response.headers)) {
         if (typeof key !== 'string' || typeof value !== 'string') {
           errors.push(`Invalid header: ${key} = ${value}`);
+        }
+        // Check if key is a valid HTTP header name (letters, hyphens, underscores only)
+        if (!/^[a-zA-Z]([a-zA-Z0-9_-]*[a-zA-Z0-9])?$/.test(key)) {
+          errors.push(`Invalid header name: ${key}`);
         }
       }
     }

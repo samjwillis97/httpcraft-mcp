@@ -108,13 +108,17 @@ export abstract class BaseTool {
    * Format successful response
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected formatSuccess(data: any): CallToolResult {
+  protected formatSuccess(data: any, mimeType?: string): CallToolResult {
     const text = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    const inferredMimeType =
+      mimeType || (typeof data === 'string' ? 'application/json' : 'application/json');
+
     return {
       content: [
         {
           type: 'text',
           text,
+          mimeType: inferredMimeType,
         },
       ],
       isError: false,
@@ -139,6 +143,7 @@ export abstract class BaseTool {
             null,
             2
           ),
+          mimeType: 'application/json',
         },
       ],
       isError: true,

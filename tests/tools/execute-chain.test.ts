@@ -45,7 +45,9 @@ describe('ExecuteChainTool', () => {
     } as any;
 
     // Mock the ResponseParser import
-    (ResponseParser as jest.MockedClass<typeof ResponseParser>).mockImplementation(() => mockParser);
+    (ResponseParser as jest.MockedClass<typeof ResponseParser>).mockImplementation(
+      () => mockParser
+    );
 
     tool = new ExecuteChainTool(mockHttpCraft);
   });
@@ -53,7 +55,9 @@ describe('ExecuteChainTool', () => {
   describe('constructor', () => {
     it('should initialize with correct properties', () => {
       expect(tool.name).toBe('httpcraft_execute_chain');
-      expect(tool.description).toBe('Execute a request chain using HTTPCraft with variable passing between steps');
+      expect(tool.description).toBe(
+        'Execute a request chain using HTTPCraft with variable passing between steps'
+      );
       expect(tool.inputSchema).toBeDefined();
     });
   });
@@ -63,7 +67,9 @@ describe('ExecuteChainTool', () => {
       const definition = tool.getToolDefinition();
 
       expect(definition.name).toBe('httpcraft_execute_chain');
-      expect(definition.description).toBe('Execute a request chain using HTTPCraft with variable passing between steps');
+      expect(definition.description).toBe(
+        'Execute a request chain using HTTPCraft with variable passing between steps'
+      );
       expect(definition.inputSchema).toBeDefined();
       expect(definition.inputSchema.type).toBe('object');
     });
@@ -177,14 +183,21 @@ describe('ExecuteChainTool', () => {
 
       expect(mockHttpCraft.execute).toHaveBeenCalledWith(
         [
-          'chain', 'exec', 'complex-chain',
-          '--profile', 'production',
-          '--env', 'staging',
-          '--var', 'userId=123',
-          '--var', 'apiKey=secret',
-          '--config', '/custom/config.yaml',
+          'chain',
+          'exec',
+          'complex-chain',
+          '--profile',
+          'production',
+          '--env',
+          'staging',
+          '--var',
+          'userId=123',
+          '--var',
+          'apiKey=secret',
+          '--config',
+          '/custom/config.yaml',
           '--stop-on-failure',
-          '--json'
+          '--json',
         ],
         { timeout: 120000 }
       );
@@ -279,7 +292,7 @@ describe('ExecuteChainTool', () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0].type).toBe('text');
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.error).toBe(true);
       expect(parsedContent.type).toBe('HttpCraftError');
@@ -303,11 +316,11 @@ describe('ExecuteChainTool', () => {
       });
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.error).toBe(true);
       expect(parsedContent.type).toBe('HttpCraftError');
-      expect(parsedContent.message).toContain('HTTPCraft command failed');
+      expect(parsedContent.message).toContain('Chain "unknown-chain" not found');
     });
 
     it('should handle parsing errors', async () => {
@@ -320,7 +333,7 @@ describe('ExecuteChainTool', () => {
       const result = await tool.execute(validParams);
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.error).toBe(true);
       expect(parsedContent.message).toContain('Failed to parse HTTPCraft chain response');
@@ -372,10 +385,7 @@ describe('ExecuteChainTool', () => {
 
       await tool.execute(validParams, context);
 
-      expect(mockHttpCraft.execute).toHaveBeenCalledWith(
-        expect.any(Array),
-        { timeout: 90000 }
-      );
+      expect(mockHttpCraft.execute).toHaveBeenCalledWith(expect.any(Array), { timeout: 90000 });
     });
 
     it('should use params timeout over context timeout', async () => {
@@ -393,10 +403,7 @@ describe('ExecuteChainTool', () => {
 
       await tool.execute(paramsWithTimeout, context);
 
-      expect(mockHttpCraft.execute).toHaveBeenCalledWith(
-        expect.any(Array),
-        { timeout: 45000 }
-      );
+      expect(mockHttpCraft.execute).toHaveBeenCalledWith(expect.any(Array), { timeout: 45000 });
     });
   });
 
@@ -409,7 +416,7 @@ describe('ExecuteChainTool', () => {
       const result = await tool.execute(invalidParams);
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.message).toContain('Parameter validation failed');
     });
@@ -422,7 +429,7 @@ describe('ExecuteChainTool', () => {
       const result = await tool.execute(invalidParams);
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.message).toContain('Parameter validation failed');
     });
@@ -468,10 +475,7 @@ describe('ExecuteChainTool', () => {
 
       const args = tool['buildCommandArgs'](params);
 
-      expect(args).toEqual([
-        'chain', 'exec', 'simple-chain',
-        '--json'
-      ]);
+      expect(args).toEqual(['chain', 'exec', 'simple-chain', '--json']);
     });
 
     it('should include all optional parameters', () => {
@@ -488,14 +492,21 @@ describe('ExecuteChainTool', () => {
       const args = tool['buildCommandArgs'](params);
 
       expect(args).toEqual([
-        'chain', 'exec', 'complex-chain',
-        '--profile', 'production',
-        '--env', 'staging',
-        '--var', 'id=123',
-        '--var', 'type=test',
-        '--config', '/custom/config.yaml',
+        'chain',
+        'exec',
+        'complex-chain',
+        '--profile',
+        'production',
+        '--env',
+        'staging',
+        '--var',
+        'id=123',
+        '--var',
+        'type=test',
+        '--config',
+        '/custom/config.yaml',
         '--stop-on-failure',
-        '--json'
+        '--json',
       ]);
     });
 

@@ -3,7 +3,12 @@
  * Comprehensive tests for process management functions
  */
 
-import { executeCommand, checkExecutableExists, findExecutableInPath, ProcessResult } from '../../src/utils/process.js';
+import {
+  executeCommand,
+  checkExecutableExists,
+  findExecutableInPath,
+  ProcessResult,
+} from '../../src/utils/process.js';
 import { spawn } from 'child_process';
 import { access } from 'fs/promises';
 import which from 'which';
@@ -171,20 +176,54 @@ describe('Process Utilities', () => {
 
       mockSpawn.mockReturnValue(mockChild as any);
 
-      // Don't trigger close event to simulate hanging process
+      // Capture the timeout callback and close handler
+      let timeoutCallback: () => void;
+      let closeHandler: (exitCode: number | null, signal: NodeJS.Signals | null) => void;
+
+      // Mock setTimeout to capture the timeout callback
+      const originalSetTimeout = global.setTimeout;
+      const setTimeoutSpy = jest.fn((callback, delay) => {
+        if (delay === 100) {
+          // Our test timeout
+          timeoutCallback = callback as () => void;
+          // Don't actually set a timer, we'll call it manually
+          return 999; // Mock timer id
+        }
+        return originalSetTimeout(callback, delay);
+      });
+      global.setTimeout = setTimeoutSpy as any;
+
+      // Capture the close event handler
       mockChild.on.mockImplementation((event, handler) => {
-        // Don't call the handler to simulate hanging
+        if (event === 'close') {
+          closeHandler = handler;
+        }
         return mockChild as any;
       });
 
       mockChild.stdout.on.mockImplementation(() => mockChild.stdout);
       mockChild.stderr.on.mockImplementation(() => mockChild.stderr);
 
-      const result = await executeCommand('slow-command', [], { timeout: 100 });
+      // Start the command - this returns a promise
+      const resultPromise = executeCommand('slow-command', [], { timeout: 100 });
+
+      // Wait a tiny bit for the promise to be set up
+      await new Promise(resolve => setImmediate(resolve));
+
+      // Now trigger the timeout callback (this simulates the timeout occurring)
+      timeoutCallback();
+
+      // Simulate the close event that occurs after timeout
+      closeHandler(null, 'SIGTERM');
+
+      // Now await the result
+      const result = await resultPromise;
 
       expect(result.success).toBe(false);
       expect(result.error?.message).toContain('Process timed out after 100ms');
       expect(mockChild.kill).toHaveBeenCalledWith('SIGTERM');
+
+      global.setTimeout = originalSetTimeout;
     });
 
     it('should handle large output buffers', async () => {
@@ -203,11 +242,6 @@ describe('Process Utilities', () => {
       mockChild.stdout.on.mockImplementation((event, handler) => {
         if (event === 'data') {
           stdoutHandler = handler;
-          // Simulate large output
-          setTimeout(() => {
-            const largeOutput = 'x'.repeat(1000);
-            stdoutHandler(Buffer.from(largeOutput));
-          }, 5);
         }
         return mockChild.stdout;
       });
@@ -215,7 +249,20 @@ describe('Process Utilities', () => {
       mockChild.stderr.on.mockImplementation(() => mockChild.stderr);
       mockChild.on.mockImplementation(() => mockChild as any);
 
-      await executeCommand('large-output', [], { maxBuffer: 500 });
+      // Start the command with a small buffer limit
+      const resultPromise = executeCommand('large-output', [], { maxBuffer: 500 });
+
+      // Wait for the promise setup
+      await new Promise(resolve => setImmediate(resolve));
+
+      // Trigger the large output that exceeds buffer
+      if (stdoutHandler) {
+        const largeOutput = 'x'.repeat(1000); // Exceeds 500 byte limit
+        stdoutHandler(Buffer.from(largeOutput));
+      }
+
+      // Wait for the kill to be called
+      await new Promise(resolve => setImmediate(resolve));
 
       expect(mockChild.kill).toHaveBeenCalledWith('SIGTERM');
     });

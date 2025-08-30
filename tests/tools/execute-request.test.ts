@@ -45,7 +45,9 @@ describe('ExecuteRequestTool', () => {
     } as any;
 
     // Mock the ResponseParser import
-    (ResponseParser as jest.MockedClass<typeof ResponseParser>).mockImplementation(() => mockParser);
+    (ResponseParser as jest.MockedClass<typeof ResponseParser>).mockImplementation(
+      () => mockParser
+    );
 
     tool = new ExecuteRequestTool(mockHttpCraft);
   });
@@ -53,7 +55,9 @@ describe('ExecuteRequestTool', () => {
   describe('constructor', () => {
     it('should initialize with correct properties', () => {
       expect(tool.name).toBe('httpcraft_execute_request');
-      expect(tool.description).toBe('Execute a standalone HTTP request using HTTPCraft with full control over method, URL, headers, and body');
+      expect(tool.description).toBe(
+        'Execute a standalone HTTP request using HTTPCraft with full control over method, URL, headers, and body'
+      );
       expect(tool.inputSchema).toBeDefined();
     });
   });
@@ -63,7 +67,9 @@ describe('ExecuteRequestTool', () => {
       const definition = tool.getToolDefinition();
 
       expect(definition.name).toBe('httpcraft_execute_request');
-      expect(definition.description).toBe('Execute a standalone HTTP request using HTTPCraft with full control over method, URL, headers, and body');
+      expect(definition.description).toBe(
+        'Execute a standalone HTTP request using HTTPCraft with full control over method, URL, headers, and body'
+      );
       expect(definition.inputSchema).toBeDefined();
       expect(definition.inputSchema.type).toBe('object');
     });
@@ -94,10 +100,11 @@ describe('ExecuteRequestTool', () => {
       mockParser.parseHttpCraftOutput.mockReturnValue({
         success: true,
         data: {
+          success: true,
           statusCode: 200,
           headers: { 'content-type': 'application/json' },
           data: { users: [{ id: 1, name: 'John' }] },
-          duration: 250,
+          timing: { total: 250 },
         },
       });
 
@@ -130,7 +137,7 @@ describe('ExecuteRequestTool', () => {
         url: 'https://api.example.com/users',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer token123',
+          Authorization: 'Bearer token123',
         },
         body: JSON.stringify({ name: 'John Doe', email: 'john@example.com' }),
       };
@@ -142,12 +149,16 @@ describe('ExecuteRequestTool', () => {
       expect(mockHttpCraft.execute).toHaveBeenCalledWith(
         [
           'request',
-          '--method', 'POST',
+          '--method',
+          'POST',
           'https://api.example.com/users',
-          '--header', 'Content-Type: application/json',
-          '--header', 'Authorization: Bearer token123',
-          '--data', JSON.stringify({ name: 'John Doe', email: 'john@example.com' }),
-          '--json'
+          '--header',
+          'Content-Type: application/json',
+          '--header',
+          'Authorization: Bearer token123',
+          '--data',
+          JSON.stringify({ name: 'John Doe', email: 'john@example.com' }),
+          '--json',
         ],
         { timeout: 30000 }
       );
@@ -174,17 +185,25 @@ describe('ExecuteRequestTool', () => {
       expect(mockHttpCraft.execute).toHaveBeenCalledWith(
         [
           'request',
-          '--method', 'PUT',
+          '--method',
+          'PUT',
           'https://api.example.com/users/123',
-          '--header', 'Content-Type: application/json',
-          '--data', '{"name": "Updated Name"}',
-          '--profile', 'prod',
-          '--var', 'userId=123',
-          '--var', 'version=2',
-          '--config', '/custom/config.yaml',
+          '--header',
+          'Content-Type: application/json',
+          '--data',
+          '{"name": "Updated Name"}',
+          '--profile',
+          'prod',
+          '--var',
+          'userId=123',
+          '--var',
+          'version=2',
+          '--config',
+          '/custom/config.yaml',
           '--no-follow-redirects',
-          '--max-redirects', '5',
-          '--json'
+          '--max-redirects',
+          '5',
+          '--json',
         ],
         { timeout: 45000 }
       );
@@ -229,10 +248,10 @@ describe('ExecuteRequestTool', () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0].type).toBe('text');
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.error).toBe(true);
-      expect(parsedContent.type).toBe('httpcraft_error');
+      expect(parsedContent.type).toBe('HttpCraftError');
     });
 
     it('should handle HTTPCraft command failure', async () => {
@@ -250,14 +269,14 @@ describe('ExecuteRequestTool', () => {
 
       const result = await tool.execute({
         method: 'GET',
-        url: 'invalid-url',
+        url: 'https://invalid-domain-that-does-not-exist.com',
       });
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.error).toBe(true);
-      expect(parsedContent.type).toBe('httpcraft_error');
+      expect(parsedContent.type).toBe('HttpCraftError');
       expect(parsedContent.message).toContain('Invalid URL format');
     });
 
@@ -271,7 +290,7 @@ describe('ExecuteRequestTool', () => {
       const result = await tool.execute(validParams);
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.error).toBe(true);
       expect(parsedContent.message).toContain('Failed to parse HTTPCraft response');
@@ -286,7 +305,7 @@ describe('ExecuteRequestTool', () => {
       const result = await tool.execute(validParams);
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.message).toContain('Failed to parse HTTPCraft response: Parser crashed');
     });
@@ -301,10 +320,7 @@ describe('ExecuteRequestTool', () => {
 
       await tool.execute(validParams, context);
 
-      expect(mockHttpCraft.execute).toHaveBeenCalledWith(
-        expect.any(Array),
-        { timeout: 60000 }
-      );
+      expect(mockHttpCraft.execute).toHaveBeenCalledWith(expect.any(Array), { timeout: 60000 });
     });
 
     it('should use params timeout over context timeout', async () => {
@@ -322,10 +338,7 @@ describe('ExecuteRequestTool', () => {
 
       await tool.execute(paramsWithTimeout, context);
 
-      expect(mockHttpCraft.execute).toHaveBeenCalledWith(
-        expect.any(Array),
-        { timeout: 45000 }
-      );
+      expect(mockHttpCraft.execute).toHaveBeenCalledWith(expect.any(Array), { timeout: 45000 });
     });
 
     it('should handle response validation warnings', async () => {
@@ -405,7 +418,7 @@ describe('ExecuteRequestTool', () => {
       const result = await tool.execute(invalidParams);
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.message).toContain('Parameter validation failed');
     });
@@ -419,7 +432,7 @@ describe('ExecuteRequestTool', () => {
       const result = await tool.execute(invalidParams);
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.message).toContain('Parameter validation failed');
     });
@@ -434,7 +447,7 @@ describe('ExecuteRequestTool', () => {
       // This test depends on whether the schema validates URLs
       // If it doesn't, the HTTPCraft command will fail instead
       const result = await tool.execute(invalidParams);
-      
+
       // Should either fail validation or be caught by HTTPCraft
       expect(result.isError).toBe(true);
     });
@@ -448,7 +461,7 @@ describe('ExecuteRequestTool', () => {
       const result = await tool.execute(invalidParams);
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.message).toContain('Parameter validation failed');
     });
@@ -465,9 +478,10 @@ describe('ExecuteRequestTool', () => {
 
       expect(args).toEqual([
         'request',
-        '--method', 'GET',
+        '--method',
+        'GET',
         'https://api.example.com/users',
-        '--json'
+        '--json',
       ]);
     });
 
@@ -491,18 +505,27 @@ describe('ExecuteRequestTool', () => {
 
       expect(args).toEqual([
         'request',
-        '--method', 'POST',
+        '--method',
+        'POST',
         'https://api.example.com/users',
-        '--header', 'Content-Type: application/json',
-        '--header', 'X-Custom: value',
-        '--data', '{"test": true}',
-        '--profile', 'dev',
-        '--var', 'id=123',
-        '--var', 'type=test',
-        '--config', '/custom/config.yaml',
+        '--header',
+        'Content-Type: application/json',
+        '--header',
+        'X-Custom: value',
+        '--data',
+        '{"test": true}',
+        '--profile',
+        'dev',
+        '--var',
+        'id=123',
+        '--var',
+        'type=test',
+        '--config',
+        '/custom/config.yaml',
         '--no-follow-redirects',
-        '--max-redirects', '3',
-        '--json'
+        '--max-redirects',
+        '3',
+        '--json',
       ]);
     });
 

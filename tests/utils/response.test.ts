@@ -368,11 +368,12 @@ describe('Response Utilities', () => {
 
   describe('formatHttpCraftError', () => {
     it('should format HTTPCraft error with full details', () => {
+      const errorMessage = 'HTTPCraft command failed';
       const stderr = 'API "unknown-api" not found in configuration';
       const exitCode = 1;
       const command = ['api', 'exec', 'unknown-api', 'users'];
 
-      const result = formatHttpCraftError(stderr, exitCode, command);
+      const result = formatHttpCraftError(errorMessage, exitCode, stderr, command);
 
       expect(result.isError).toBe(true);
       expect(result.content[0].type).toBe('text');
@@ -389,10 +390,11 @@ describe('Response Utilities', () => {
     });
 
     it('should format HTTPCraft error without command', () => {
+      const errorMessage = 'Connection timeout';
       const stderr = 'Connection timeout';
       const exitCode = 124;
 
-      const result = formatHttpCraftError(stderr, exitCode);
+      const result = formatHttpCraftError(errorMessage, exitCode, stderr);
 
       expect(result.isError).toBe(true);
 
@@ -403,7 +405,7 @@ describe('Response Utilities', () => {
     });
 
     it('should handle empty stderr', () => {
-      const result = formatHttpCraftError('', 1);
+      const result = formatHttpCraftError('Empty error', 1, '');
 
       expect(result.isError).toBe(true);
 

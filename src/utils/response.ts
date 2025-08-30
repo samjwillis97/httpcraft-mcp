@@ -187,8 +187,9 @@ export function formatValidationError(errors: string[]): CallToolResult {
  * Format HTTPCraft CLI error response
  */
 export function formatHttpCraftError(
-  stderr: string,
+  errorMessage: string,
   exitCode: number,
+  stderr?: string,
   command?: string[]
 ): CallToolResult {
   return {
@@ -199,9 +200,9 @@ export function formatHttpCraftError(
           {
             error: true,
             type: 'HttpCraftError',
-            message: 'HTTPCraft command failed',
-            stderr,
+            message: errorMessage,
             exitCode,
+            stderr,
             command,
             timestamp: new Date().toISOString(),
           },

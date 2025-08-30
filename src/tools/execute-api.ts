@@ -52,7 +52,7 @@ export class ExecuteApiTool extends BaseTool {
         requestId: context.requestId,
       });
 
-      return formatHttpCraftError(result.error?.message || 'Unknown error', -1, args);
+      return formatHttpCraftError(result.error?.message || 'Unknown error', -1, undefined, args);
     }
 
     const httpcraftResult = result.data;
@@ -66,7 +66,12 @@ export class ExecuteApiTool extends BaseTool {
         requestId: context.requestId,
       });
 
-      return formatHttpCraftError(errorMessage, httpcraftResult.exitCode, args);
+      return formatHttpCraftError(
+        errorMessage,
+        httpcraftResult.exitCode,
+        httpcraftResult.stderr,
+        args
+      );
     }
 
     // Parse and format the response

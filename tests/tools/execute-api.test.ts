@@ -45,7 +45,9 @@ describe('ExecuteApiTool', () => {
     } as any;
 
     // Mock the ResponseParser import
-    (ResponseParser as jest.MockedClass<typeof ResponseParser>).mockImplementation(() => mockParser);
+    (ResponseParser as jest.MockedClass<typeof ResponseParser>).mockImplementation(
+      () => mockParser
+    );
 
     tool = new ExecuteApiTool(mockHttpCraft);
   });
@@ -53,7 +55,9 @@ describe('ExecuteApiTool', () => {
   describe('constructor', () => {
     it('should initialize with correct properties', () => {
       expect(tool.name).toBe('httpcraft_execute_api');
-      expect(tool.description).toBe('Execute a configured API endpoint using HTTPCraft with profiles and environments');
+      expect(tool.description).toBe(
+        'Execute a configured API endpoint using HTTPCraft with profiles and environments'
+      );
       expect(tool.inputSchema).toBeDefined();
     });
   });
@@ -63,7 +67,9 @@ describe('ExecuteApiTool', () => {
       const definition = tool.getToolDefinition();
 
       expect(definition.name).toBe('httpcraft_execute_api');
-      expect(definition.description).toBe('Execute a configured API endpoint using HTTPCraft with profiles and environments');
+      expect(definition.description).toBe(
+        'Execute a configured API endpoint using HTTPCraft with profiles and environments'
+      );
       expect(definition.inputSchema).toBeDefined();
       expect(definition.inputSchema.type).toBe('object');
     });
@@ -95,10 +101,11 @@ describe('ExecuteApiTool', () => {
       mockParser.parseHttpCraftOutput.mockReturnValue({
         success: true,
         data: {
+          success: true,
           statusCode: 200,
           headers: { 'content-type': 'application/json' },
           data: { users: [{ id: 1, name: 'John' }] },
-          duration: 150,
+          timing: { total: 150 },
         },
       });
 
@@ -142,13 +149,21 @@ describe('ExecuteApiTool', () => {
 
       expect(mockHttpCraft.execute).toHaveBeenCalledWith(
         [
-          'api', 'exec', 'test-api', 'users',
-          '--profile', 'dev',
-          '--env', 'staging',
-          '--var', 'userId=123',
-          '--var', 'active=true',
-          '--config', '/custom/config.yaml',
-          '--json'
+          'api',
+          'exec',
+          'test-api',
+          'users',
+          '--profile',
+          'dev',
+          '--env',
+          'staging',
+          '--var',
+          'userId=123',
+          '--var',
+          'active=true',
+          '--config',
+          '/custom/config.yaml',
+          '--json',
         ],
         { timeout: 60000 }
       );
@@ -166,10 +181,10 @@ describe('ExecuteApiTool', () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0].type).toBe('text');
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.error).toBe(true);
-      expect(parsedContent.type).toBe('httpcraft_error');
+      expect(parsedContent.type).toBe('HttpCraftError');
     });
 
     it('should handle HTTPCraft command failure', async () => {
@@ -192,10 +207,10 @@ describe('ExecuteApiTool', () => {
       });
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.error).toBe(true);
-      expect(parsedContent.type).toBe('httpcraft_error');
+      expect(parsedContent.type).toBe('HttpCraftError');
       expect(parsedContent.message).toContain('API "unknown-api" not found');
     });
 
@@ -209,7 +224,7 @@ describe('ExecuteApiTool', () => {
       const result = await tool.execute(validParams);
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.error).toBe(true);
       expect(parsedContent.message).toContain('Failed to parse HTTPCraft response');
@@ -224,7 +239,7 @@ describe('ExecuteApiTool', () => {
       const result = await tool.execute(validParams);
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.message).toContain('Failed to parse HTTPCraft response: Parser crashed');
     });
@@ -239,10 +254,7 @@ describe('ExecuteApiTool', () => {
 
       await tool.execute(validParams, context);
 
-      expect(mockHttpCraft.execute).toHaveBeenCalledWith(
-        expect.any(Array),
-        { timeout: 45000 }
-      );
+      expect(mockHttpCraft.execute).toHaveBeenCalledWith(expect.any(Array), { timeout: 45000 });
     });
 
     it('should use params timeout over context timeout', async () => {
@@ -260,10 +272,7 @@ describe('ExecuteApiTool', () => {
 
       await tool.execute(paramsWithTimeout, context);
 
-      expect(mockHttpCraft.execute).toHaveBeenCalledWith(
-        expect.any(Array),
-        { timeout: 60000 }
-      );
+      expect(mockHttpCraft.execute).toHaveBeenCalledWith(expect.any(Array), { timeout: 60000 });
     });
 
     it('should handle response validation warnings', async () => {
@@ -317,12 +326,19 @@ describe('ExecuteApiTool', () => {
 
       expect(mockHttpCraft.execute).toHaveBeenCalledWith(
         [
-          'api', 'exec', 'test-api', 'users',
-          '--profile', 'dev',
-          '--var', 'nested.key=value',
-          '--var', 'arrayValue=1,2,3',
-          '--var', 'objectValue=[object Object]',
-          '--json'
+          'api',
+          'exec',
+          'test-api',
+          'users',
+          '--profile',
+          'dev',
+          '--var',
+          'nested.key=value',
+          '--var',
+          'arrayValue=1,2,3',
+          '--var',
+          'objectValue=[object Object]',
+          '--json',
         ],
         { timeout: 30000 }
       );
@@ -339,7 +355,7 @@ describe('ExecuteApiTool', () => {
       const result = await tool.execute(invalidParams);
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.message).toContain('Parameter validation failed');
     });
@@ -354,7 +370,7 @@ describe('ExecuteApiTool', () => {
       const result = await tool.execute(invalidParams);
 
       expect(result.isError).toBe(true);
-      
+
       const parsedContent = JSON.parse(result.content[0].text!);
       expect(parsedContent.message).toContain('Parameter validation failed');
     });
@@ -382,7 +398,12 @@ describe('ExecuteApiTool', () => {
 
       mockParser.parseHttpCraftOutput.mockReturnValue({
         success: true,
-        data: { statusCode: 200, data: {}, headers: {} },
+        data: { success: true, statusCode: 200, data: {}, headers: {} },
+      });
+
+      mockParser.validateResponse.mockReturnValue({
+        valid: true,
+        errors: [],
       });
 
       const result = await tool.execute(validParamsWithOptionals);
@@ -401,11 +422,7 @@ describe('ExecuteApiTool', () => {
 
       const args = tool['buildCommandArgs'](params);
 
-      expect(args).toEqual([
-        'api', 'exec', 'test-api', 'users',
-        '--profile', 'dev',
-        '--json'
-      ]);
+      expect(args).toEqual(['api', 'exec', 'test-api', 'users', '--profile', 'dev', '--json']);
     });
 
     it('should include all optional parameters', () => {
@@ -421,13 +438,21 @@ describe('ExecuteApiTool', () => {
       const args = tool['buildCommandArgs'](params);
 
       expect(args).toEqual([
-        'api', 'exec', 'test-api', 'users',
-        '--profile', 'dev',
-        '--env', 'staging',
-        '--var', 'id=123',
-        '--var', 'active=true',
-        '--config', '/custom/config.yaml',
-        '--json'
+        'api',
+        'exec',
+        'test-api',
+        'users',
+        '--profile',
+        'dev',
+        '--env',
+        'staging',
+        '--var',
+        'id=123',
+        '--var',
+        'active=true',
+        '--config',
+        '/custom/config.yaml',
+        '--json',
       ]);
     });
   });
