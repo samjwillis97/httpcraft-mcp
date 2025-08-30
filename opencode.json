@@ -9,6 +9,17 @@
       "type": "local",
       "command": [],
       "enabled": false
+    },
+    "httpcraft": {
+      "type": "local",
+      "command": [
+        "node",
+        "dist/server.js"
+      ],
+      "enabled": true,
+      "environment": {
+        "MY_ENV_VAR": "my_env_var_value"
+      }
     }
   },
   "$schema": "https://opencode.ai/config.json"

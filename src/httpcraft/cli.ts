@@ -155,6 +155,40 @@ export class HttpCraftCli {
   }
 
   /**
+   * Execute HTTPCraft with plain text output parsing (newline-separated entries)
+   */
+  public async executeWithTextOutput(
+    args: readonly string[],
+    options: HttpCraftOptions = {}
+  ): AsyncResult<string[]> {
+    const result = await this.execute(args, options);
+
+    if (!result.success) {
+      return result;
+    }
+
+    if (result.data.exitCode !== 0) {
+      return {
+        success: false,
+        error: new Error(`HTTPCraft command failed: ${result.data.stderr || result.data.stdout}`),
+      };
+    }
+
+    // Parse newline-separated output
+    const lines = result.data.stdout
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+
+    logger.debug('Parsed HTTPCraft text output', {
+      lineCount: lines.length,
+      lines: lines.slice(0, 5), // Log first 5 entries for debugging
+    });
+
+    return { success: true, data: lines };
+  }
+
+  /**
    * Get current HTTPCraft configuration
    */
   public async getConfig(): AsyncResult<HttpCraftConfig> {

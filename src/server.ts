@@ -11,11 +11,12 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 
 import { logger } from './utils/logger.js';
 import type { ServerConfig, HealthStatus } from './types/index.js';
-import { HttpCraftCli } from './httpcraft/cli-simple.js';
+import { HttpCraftCli } from './httpcraft/cli.js';
 import { toolRegistry } from './tools/registry.js';
 import { ExecuteApiTool } from './tools/execute-api.js';
 import { ExecuteRequestTool } from './tools/execute-request.js';
 import { ExecuteChainTool } from './tools/execute-chain.js';
+import { ListApisTool, ListEndpointsTool, ListProfilesTool } from './tools/discovery.js';
 
 class HttpCraftMcpServer {
   private readonly server: Server;
@@ -58,16 +59,16 @@ class HttpCraftMcpServer {
   }
 
   private setupTools(): void {
-    // We need to create HttpCraftCli instance for the tools
-    // Note: this is a simplified version for now, will be enhanced with the full CLI in later phases
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const httpCraftCli = this.httpCraft as any;
-
     // Register core tools
     try {
-      toolRegistry.register(new ExecuteApiTool(httpCraftCli));
-      toolRegistry.register(new ExecuteRequestTool(httpCraftCli));
-      toolRegistry.register(new ExecuteChainTool(httpCraftCli));
+      toolRegistry.register(new ExecuteApiTool(this.httpCraft));
+      toolRegistry.register(new ExecuteRequestTool(this.httpCraft));
+      toolRegistry.register(new ExecuteChainTool(this.httpCraft));
+
+      // Register discovery tools
+      toolRegistry.register(new ListApisTool(this.httpCraft));
+      toolRegistry.register(new ListEndpointsTool(this.httpCraft));
+      toolRegistry.register(new ListProfilesTool(this.httpCraft));
 
       logger.info('Tools registered successfully', {
         toolCount: toolRegistry.getToolCount(),
