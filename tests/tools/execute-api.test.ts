@@ -150,7 +150,7 @@ describe('ExecuteApiTool', () => {
 
       // Verify HTTPCraft was called with correct arguments
       expect(mockHttpCraft.execute).toHaveBeenCalledWith(
-        ['api', 'exec', 'test-api', 'users', '--profile', 'dev', '--json'],
+        ['test-api', 'users', '--profile', 'dev', '--json'],
         { timeout: 30000 }
       );
     });
@@ -172,8 +172,6 @@ describe('ExecuteApiTool', () => {
 
       expect(mockHttpCraft.execute).toHaveBeenCalledWith(
         [
-          'api',
-          'exec',
           'test-api',
           'users',
           '--profile',
@@ -326,7 +324,7 @@ describe('ExecuteApiTool', () => {
 
       // Should not include --var arguments for empty variables
       expect(mockHttpCraft.execute).toHaveBeenCalledWith(
-        ['api', 'exec', 'test-api', 'users', '--profile', 'dev', '--json'],
+        ['test-api', 'users', '--profile', 'dev', '--json'],
         { timeout: 30000 }
       );
     });
@@ -349,8 +347,6 @@ describe('ExecuteApiTool', () => {
 
       expect(mockHttpCraft.execute).toHaveBeenCalledWith(
         [
-          'api',
-          'exec',
           'test-api',
           'users',
           '--profile',
@@ -445,7 +441,7 @@ describe('ExecuteApiTool', () => {
 
       const args = tool['buildCommandArgs'](params);
 
-      expect(args).toEqual(['api', 'exec', 'test-api', 'users', '--profile', 'dev', '--json']);
+      expect(args).toEqual(['test-api', 'users', '--profile', 'dev', '--json']);
     });
 
     it('should include all optional parameters', () => {
@@ -461,8 +457,6 @@ describe('ExecuteApiTool', () => {
       const args = tool['buildCommandArgs'](params);
 
       expect(args).toEqual([
-        'api',
-        'exec',
         'test-api',
         'users',
         '--profile',

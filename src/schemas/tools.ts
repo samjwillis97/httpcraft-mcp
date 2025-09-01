@@ -186,9 +186,13 @@ export const HealthCheckSchema = z.object({});
 export const HttpCraftResponseSchema = z.object({
   success: z.boolean(),
   statusCode: z.number().optional(),
+  statusText: z.string().optional(),
   headers: z.record(z.string()).optional(),
   data: z.any().optional(),
   error: z.string().optional(),
+  isBinary: z.boolean().optional(),
+  contentType: z.string().optional(),
+  contentLength: z.number().optional(),
   timing: z
     .object({
       total: z.number(),

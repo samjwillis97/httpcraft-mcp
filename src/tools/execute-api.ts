@@ -186,11 +186,10 @@ export class ExecuteApiTool extends BaseTool {
    * Build HTTPCraft command arguments for API execution
    */
   private buildCommandArgs(params: ExecuteApiParams): string[] {
-    const args: string[] = ['api', 'exec'];
+    const args: string[] = [];
 
     // API and endpoint
     args.push(params.api, params.endpoint);
-
     // Profile
     args.push('--profile', params.profile);
 

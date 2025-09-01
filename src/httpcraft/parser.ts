@@ -27,18 +27,26 @@ export interface HttpCraftOutput {
   };
 }
 
-// Schema for validating HTTPCraft JSON output
+// Schema for validating HTTPCraft JSON output (updated for new format)
 const HttpCraftJsonOutputSchema = z.object({
   status: z.number().nullable().optional(),
   statusCode: z.number().nullable().optional(),
+  statusText: z.string().optional(),
   headers: z.record(z.string()).optional(),
   body: z.any().optional(),
   data: z.any().optional(),
   response: z.any().optional(),
+  isBinary: z.boolean().optional(),
+  contentType: z.string().optional(),
+  contentLength: z.number().optional(),
   duration: z.number().nullable().optional(),
   totalTime: z.number().nullable().optional(),
   timing: z
     .object({
+      duration: z.number().nullable().optional(),
+      startTime: z.string().optional(),
+      endTime: z.string().optional(),
+      // Legacy timing fields
       dns: z.number().nullable().optional(),
       connect: z.number().nullable().optional(),
       ssl: z.number().nullable().optional(),
@@ -192,7 +200,7 @@ export class ResponseParser {
         headers: this.normalizeHeaders(parsed.headers || {}),
         data: responseData,
         timing: {
-          total: parsed.duration || parsed.totalTime || 0,
+          total: parsed.timing?.duration || parsed.duration || parsed.totalTime || 0,
           dns: parsed.timing?.dns === null ? undefined : parsed.timing?.dns,
           connect: parsed.timing?.connect === null ? undefined : parsed.timing?.connect,
           ssl: parsed.timing?.ssl === null ? undefined : parsed.timing?.ssl,
@@ -200,6 +208,11 @@ export class ResponseParser {
           wait: parsed.timing?.wait === null ? undefined : parsed.timing?.wait,
           receive: parsed.timing?.receive === null ? undefined : parsed.timing?.receive,
         },
+        // Add new fields from HTTPCraft update
+        statusText: parsed.statusText,
+        isBinary: parsed.isBinary,
+        contentType: parsed.contentType,
+        contentLength: parsed.contentLength,
       };
       return { success: true, data: response };
     } catch (parseError) {

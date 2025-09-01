@@ -198,58 +198,61 @@ export class HttpCraftCli {
   /**
    * List all available APIs using the new HTTPCraft list command
    */
-  public async listApis(configPath?: string): AsyncResult<string[]> {
+  public async listApis(configPath?: string): AsyncResult<ApiListItem[]> {
     logger.debug('Listing APIs using HTTPCraft list command', { configPath });
 
-    const args = ['list', 'apis', '--format=json'];
+    const args = ['list', 'apis', '--json'];
     if (configPath) {
       args.push('--config', configPath);
     }
 
-    const result = await this.executeWithJsonOutput<{ apis: string[] }>(args);
+    const result = await this.executeWithJsonOutput<ApiListItem[]>(args);
     if (!result.success) {
       return result;
     }
 
-    return { success: true, data: result.data.apis || [] };
+    // Return the full API objects with descriptions
+    return { success: true, data: result.data };
   }
 
   /**
    * List all endpoints for a specific API using the new HTTPCraft list command
    */
-  public async listEndpoints(api: string, configPath?: string): AsyncResult<string[]> {
+  public async listEndpoints(api: string, configPath?: string): AsyncResult<EndpointListItem[]> {
     logger.debug('Listing endpoints using HTTPCraft list command', { api, configPath });
 
-    const args = ['list', 'endpoints', api, '--format=json'];
+    const args = ['list', 'endpoints', api, '--json'];
     if (configPath) {
       args.push('--config', configPath);
     }
 
-    const result = await this.executeWithJsonOutput<{ endpoints: string[] }>(args);
+    const result = await this.executeWithJsonOutput<EndpointListItem[]>(args);
     if (!result.success) {
       return result;
     }
 
-    return { success: true, data: result.data.endpoints || [] };
+    // Return the full endpoint objects with descriptions
+    return { success: true, data: result.data };
   }
 
   /**
    * List all available profiles using the new HTTPCraft list command
    */
-  public async listProfiles(configPath?: string): AsyncResult<string[]> {
+  public async listProfiles(configPath?: string): AsyncResult<ProfileListItem[]> {
     logger.debug('Listing profiles using HTTPCraft list command', { configPath });
 
-    const args = ['list', 'profiles', '--format=json'];
+    const args = ['list', 'profiles', '--json'];
     if (configPath) {
       args.push('--config', configPath);
     }
 
-    const result = await this.executeWithJsonOutput<{ profiles: string[] }>(args);
+    const result = await this.executeWithJsonOutput<ProfileListItem[]>(args);
     if (!result.success) {
       return result;
     }
 
-    return { success: true, data: result.data.profiles || [] };
+    // Return the full profile objects with descriptions
+    return { success: true, data: result.data };
   }
 
   /**
@@ -258,7 +261,7 @@ export class HttpCraftCli {
   public async describeApi(name: string, configPath?: string): AsyncResult<ApiDescription> {
     logger.debug('Describing API using HTTPCraft describe command', { name, configPath });
 
-    const args = ['describe', 'api', name, '--format=json'];
+    const args = ['describe', 'api', name, '--json'];
     if (configPath) {
       args.push('--config', configPath);
     }
@@ -280,7 +283,7 @@ export class HttpCraftCli {
       configPath,
     });
 
-    const args = ['describe', 'endpoint', api, endpoint, '--format=json'];
+    const args = ['describe', 'endpoint', api, endpoint, '--json'];
     if (configPath) {
       args.push('--config', configPath);
     }
@@ -294,7 +297,7 @@ export class HttpCraftCli {
   public async describeProfile(name: string, configPath?: string): AsyncResult<ProfileDescription> {
     logger.debug('Describing profile using HTTPCraft describe command', { name, configPath });
 
-    const args = ['describe', 'profile', name, '--format=json'];
+    const args = ['describe', 'profile', name, '--json'];
     if (configPath) {
       args.push('--config', configPath);
     }
@@ -337,4 +340,27 @@ export interface ProfileDescription {
   variables?: Record<string, any>;
   timeout?: number;
   retries?: number;
+}
+
+// Type definitions for list command responses
+export interface ApiListItem {
+  name: string;
+  description: string;
+  baseUrl: string;
+  endpoints: number;
+}
+
+export interface EndpointListItem {
+  api: string;
+  name: string;
+  method: string;
+  path: string;
+  description: string;
+}
+
+export interface ProfileListItem {
+  name: string;
+  description: string;
+  isDefault: boolean;
+  variables: number;
 }
