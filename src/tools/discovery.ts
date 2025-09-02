@@ -9,12 +9,14 @@ import {
   ListApisSchema,
   ListEndpointsSchema,
   ListProfilesSchema,
+  ListVariablesSchema,
   DescribeApiSchema,
   DescribeEndpointSchema,
   DescribeProfileSchema,
   type ListApisParams,
   type ListEndpointsParams,
   type ListProfilesParams,
+  type ListVariablesParams,
   type DescribeApiParams,
   type DescribeEndpointParams,
   type DescribeProfileParams,
@@ -326,6 +328,60 @@ export class DescribeProfileTool extends BaseTool {
     return this.formatSuccess({
       success: true,
       profile: result.data,
+      timestamp: new Date().toISOString(),
+    });
+  }
+}
+
+/**
+ * List Variables Tool
+ * Lists all available variables from different sources
+ */
+export class ListVariablesTool extends BaseTool {
+  public readonly name = 'httpcraft_list_variables';
+  public readonly description =
+    'List all available variables from profiles, APIs, endpoints, and global sources';
+  public readonly inputSchema = ListVariablesSchema;
+
+  constructor(httpcraft: HttpCraftCli) {
+    super(httpcraft);
+  }
+
+  protected async executeInternal(
+    params: ListVariablesParams,
+    context: ToolExecutionContext
+  ): Promise<CallToolResult> {
+    logger.debug('Listing variables', {
+      profiles: params.profiles,
+      api: params.api,
+      endpoint: params.endpoint,
+      requestId: context.requestId,
+    });
+
+    const result = await this.httpcraft.listVariables(
+      params.configPath,
+      params.profiles,
+      params.api,
+      params.endpoint
+    );
+
+    if (!result.success) {
+      logger.error('Failed to list variables', {
+        error: result.error?.message,
+        requestId: context.requestId,
+      });
+
+      return this.formatError(new Error(`Failed to list variables: ${result.error?.message}`));
+    }
+
+    logger.debug('Successfully listed variables', {
+      variableCount: result.data.length,
+      requestId: context.requestId,
+    });
+
+    return this.formatSuccess({
+      success: true,
+      variables: result.data,
       timestamp: new Date().toISOString(),
     });
   }

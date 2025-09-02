@@ -323,6 +323,7 @@ expect(failResult.failedStep).toBeDefined();
 - [x] Implement `httpcraft_list_apis` tool
 - [x] Implement `httpcraft_list_endpoints` tool
 - [x] Implement `httpcraft_list_profiles` tool
+- [x] Implement `httpcraft_list_variables` tool (implemented, pending HTTPCraft deployment)
 - [x] Add configuration file parsing
 - [x] Cache discovery results for performance
 
@@ -331,6 +332,7 @@ expect(failResult.failedStep).toBeDefined();
 - `src/tools/discovery.ts` - Discovery tools ✅
 - `src/httpcraft/discovery.ts` - Configuration parsing ✅
 - Discovery result caching mechanism ✅
+- Variables listing tool with profile/API/endpoint filtering
 
 **Test Criteria**:
 
@@ -348,6 +350,14 @@ expect(endpoints.endpoints).toContain('users');
 // Should list profiles
 const profiles = await listProfiles();
 expect(profiles.profiles).toContain('dev');
+
+// Should list variables with sources
+const variables = await listVariables({ api: 'test-api' });
+expect(variables.success).toBe(true);
+expect(variables.variables).toBeInstanceOf(Array);
+expect(variables.variables[0]).toHaveProperty('name');
+expect(variables.variables[0]).toHaveProperty('value');
+expect(variables.variables[0]).toHaveProperty('source');
 ```
 
 ### Phase 3.3: Configuration Management

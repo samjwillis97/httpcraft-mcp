@@ -20,6 +20,7 @@ import {
   ListApisTool,
   ListEndpointsTool,
   ListProfilesTool,
+  ListVariablesTool,
   DescribeApiTool,
   DescribeEndpointTool,
   DescribeProfileTool,
@@ -76,6 +77,7 @@ class HttpCraftMcpServer {
       toolRegistry.register(new ListApisTool(this.httpCraft));
       toolRegistry.register(new ListEndpointsTool(this.httpCraft));
       toolRegistry.register(new ListProfilesTool(this.httpCraft));
+      toolRegistry.register(new ListVariablesTool(this.httpCraft));
 
       // Register describe tools
       toolRegistry.register(new DescribeApiTool(this.httpCraft));

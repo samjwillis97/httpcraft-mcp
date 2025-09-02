@@ -256,6 +256,47 @@ export class HttpCraftCli {
   }
 
   /**
+   * List all available variables using the new HTTPCraft list command
+   */
+  public async listVariables(
+    configPath?: string,
+    profiles?: string[],
+    api?: string,
+    endpoint?: string
+  ): AsyncResult<VariableListItem[]> {
+    logger.debug('Listing variables using HTTPCraft list command', {
+      configPath,
+      profiles,
+      api,
+      endpoint,
+    });
+
+    const args = ['list', 'variables', '--json'];
+    if (configPath) {
+      args.push('--config', configPath);
+    }
+    if (profiles && profiles.length > 0) {
+      profiles.forEach(profile => {
+        args.push('--profile', profile);
+      });
+    }
+    if (api) {
+      args.push('--api', api);
+    }
+    if (endpoint) {
+      args.push('--endpoint', endpoint);
+    }
+
+    const result = await this.executeWithJsonOutput<VariableListItem[]>(args);
+    if (!result.success) {
+      return result;
+    }
+
+    // Return the full variable objects with sources and active status
+    return { success: true, data: result.data };
+  }
+
+  /**
    * Describe an API using the new HTTPCraft describe command
    */
   public async describeApi(name: string, configPath?: string): AsyncResult<ApiDescription> {
@@ -363,4 +404,12 @@ export interface ProfileListItem {
   description: string;
   isDefault: boolean;
   variables: number;
+}
+
+export interface VariableListItem {
+  name: string;
+  value: string;
+  source: string;
+  scope?: string;
+  active?: boolean;
 }

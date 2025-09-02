@@ -148,6 +148,13 @@ export const ListProfilesSchema = z.object({
   configPath: ConfigPathSchema,
 });
 
+export const ListVariablesSchema = z.object({
+  configPath: ConfigPathSchema,
+  profiles: z.array(z.string()).optional().describe('Profiles to show variables for'),
+  api: z.string().optional().describe('API to show variables for'),
+  endpoint: z.string().optional().describe('Endpoint to show variables for (requires api)'),
+});
+
 export const ListChainsSchema = z.object({
   configPath: ConfigPathSchema,
 });
@@ -236,6 +243,7 @@ export type ExecuteChainParams = z.infer<typeof ExecuteChainSchema>;
 export type ListApisParams = z.infer<typeof ListApisSchema>;
 export type ListEndpointsParams = z.infer<typeof ListEndpointsSchema>;
 export type ListProfilesParams = z.infer<typeof ListProfilesSchema>;
+export type ListVariablesParams = z.infer<typeof ListVariablesSchema>;
 export type ListChainsParams = z.infer<typeof ListChainsSchema>;
 export type DescribeApiParams = z.infer<typeof DescribeApiSchema>;
 export type DescribeEndpointParams = z.infer<typeof DescribeEndpointSchema>;
