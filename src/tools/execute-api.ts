@@ -63,21 +63,29 @@ export class ExecuteApiTool extends BaseTool {
 
     if (!result.success) {
       logger.error('HTTPCraft CLI execution failed', {
-        error: result.error?.message,
+        error: result.error?.message || 'Process execution failed',
         requestId: context.requestId,
       });
 
-      return formatHttpCraftError(result.error?.message || 'Unknown error', -1, undefined, args);
+      // Extract meaningful error message from the process execution error
+      const errorMessage = result.error?.message || 'HTTPCraft execution failed';
+      return formatHttpCraftError(errorMessage, -1, undefined, args);
     }
 
     const httpcraftResult = result.data;
 
     // Handle HTTPCraft command failure
     if (!httpcraftResult.success) {
-      const errorMessage = extractHttpCraftError(httpcraftResult.stderr);
+      // Check both stderr and stdout for error messages
+      const errorMessage =
+        extractHttpCraftError(httpcraftResult.stderr) !== 'Unknown HTTPCraft error'
+          ? extractHttpCraftError(httpcraftResult.stderr)
+          : extractHttpCraftError(httpcraftResult.stdout);
+
       logger.error('HTTPCraft command failed', {
         exitCode: httpcraftResult.exitCode,
         stderr: httpcraftResult.stderr,
+        stdout: httpcraftResult.stdout,
         requestId: context.requestId,
       });
 

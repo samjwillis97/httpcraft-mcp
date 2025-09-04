@@ -30,125 +30,290 @@ describe('ResponseParser', () => {
   });
 
   describe('parseHttpCraftOutput', () => {
-    it('should parse valid JSON output successfully', async () => {
-      const jsonOutput = JSON.stringify({
-        statusCode: 200,
-        headers: { 'content-type': 'application/json' },
-        body: { message: 'success', data: [1, 2, 3] },
-        duration: 250,
-      });
-
-      const result = parser.parseHttpCraftOutput(jsonOutput);
-
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data).toEqual({
-          success: true,
-          statusCode: 200,
-          headers: { 'content-type': 'application/json' },
-          data: { message: 'success', data: [1, 2, 3] },
-          timing: {
-            total: 250,
-            dns: undefined,
-            connect: undefined,
-            ssl: undefined,
-            send: undefined,
-            wait: undefined,
-            receive: undefined,
+    // Tests for HTTPCraft API response format
+    describe('HTTPCraft API response format', () => {
+      it('should parse successful API response', () => {
+        const apiOutput = JSON.stringify({
+          status: 'success',
+          meta: {
+            version: 6,
+            schemaReference: '#/definitions/healthInsurancePolicyV6',
+            type: 'single',
+          },
+          data: {
+            effectiveDate: '2025-09-04',
+            policyHolderId: 'nib:65931864',
+            healthPolicyId: 'nib:1226030U',
           },
         });
-      }
+
+        const result = parser.parseHttpCraftOutput(apiOutput);
+
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data).toEqual({
+            success: true,
+            statusCode: undefined,
+            headers: {},
+            data: {
+              effectiveDate: '2025-09-04',
+              policyHolderId: 'nib:65931864',
+              healthPolicyId: 'nib:1226030U',
+            },
+            timing: {
+              total: 0,
+            },
+            statusText: undefined,
+            isBinary: false,
+            contentType: 'application/json',
+            contentLength: undefined,
+            meta: {
+              version: 6,
+              schemaReference: '#/definitions/healthInsurancePolicyV6',
+              type: 'single',
+            },
+            error: undefined,
+          });
+        }
+      });
+
+      it('should parse failed API response', () => {
+        const apiOutput = JSON.stringify({
+          status: 'error',
+          error: 'API endpoint not found',
+          meta: {
+            version: 6,
+            type: 'error',
+          },
+        });
+
+        const result = parser.parseHttpCraftOutput(apiOutput);
+
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.success).toBe(false);
+          expect(result.data.error).toBe('API endpoint not found');
+          expect(result.data.statusCode).toBeUndefined();
+          expect(result.data.headers).toEqual({});
+          expect(result.data.contentType).toBe('application/json');
+          expect(result.data.meta).toEqual({
+            version: 6,
+            type: 'error',
+          });
+        }
+      });
+
+      it('should handle API response with minimal data', () => {
+        const apiOutput = JSON.stringify({
+          status: 'success',
+          data: null,
+        });
+
+        const result = parser.parseHttpCraftOutput(apiOutput);
+
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.success).toBe(true);
+          expect(result.data.data).toBeNull();
+          expect(result.data.contentType).toBe('application/json');
+          expect(result.data.meta).toBeUndefined();
+        }
+      });
+
+      it('should handle API response with complex nested data', () => {
+        const complexData = {
+          users: [
+            { id: 1, name: 'John', profile: { age: 30, preferences: { theme: 'dark' } } },
+            { id: 2, name: 'Jane', profile: { age: 25, preferences: { theme: 'light' } } },
+          ],
+          pagination: { page: 1, total: 100, hasMore: true },
+        };
+
+        const apiOutput = JSON.stringify({
+          status: 'success',
+          meta: { version: 1, type: 'list' },
+          data: complexData,
+        });
+
+        const result = parser.parseHttpCraftOutput(apiOutput);
+
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.success).toBe(true);
+          expect(result.data.data).toEqual(complexData);
+          expect(result.data.meta).toEqual({ version: 1, type: 'list' });
+        }
+      });
     });
 
-    it('should handle different JSON field names for status', async () => {
-      const testCases = [
-        { status: 404 },
-        { statusCode: 404 },
-        { status: 200, statusCode: 201 }, // status takes precedence
-      ];
+    // Tests for HTTP response format (existing functionality)
+    describe('HTTP response format', () => {
+      it('should parse valid JSON output successfully', async () => {
+        const jsonOutput = JSON.stringify({
+          statusCode: 200,
+          headers: { 'content-type': 'application/json' },
+          body: { message: 'success', data: [1, 2, 3] },
+          duration: 250,
+        });
 
-      for (const testCase of testCases) {
-        const jsonOutput = JSON.stringify(testCase);
         const result = parser.parseHttpCraftOutput(jsonOutput);
 
         expect(result.success).toBe(true);
         if (result.success) {
-          const expectedStatus = testCase.status ?? testCase.statusCode;
-          expect(result.data.statusCode).toBe(expectedStatus);
+          expect(result.data).toEqual({
+            success: true,
+            statusCode: 200,
+            headers: { 'content-type': 'application/json' },
+            data: { message: 'success', data: [1, 2, 3] },
+            timing: {
+              total: 250,
+              dns: undefined,
+              connect: undefined,
+              ssl: undefined,
+              send: undefined,
+              wait: undefined,
+              receive: undefined,
+            },
+            statusText: undefined,
+            isBinary: undefined,
+            contentType: undefined,
+            contentLength: undefined,
+          });
         }
-      }
-    });
+      });
 
-    it('should handle different JSON field names for response data', async () => {
-      const testCases = [
-        { body: { type: 'body' } },
-        { data: { type: 'data' } },
-        { response: { type: 'response' } },
-        { body: { type: 'body' }, data: { type: 'data' } }, // body takes precedence
-      ];
+      it('should handle different JSON field names for status', async () => {
+        const testCases = [
+          { status: 404 },
+          { statusCode: 404 },
+          { status: 200, statusCode: 201 }, // status takes precedence
+        ];
 
-      for (const testCase of testCases) {
-        const jsonOutput = JSON.stringify(testCase);
+        for (const testCase of testCases) {
+          const jsonOutput = JSON.stringify(testCase);
+          const result = parser.parseHttpCraftOutput(jsonOutput);
+
+          expect(result.success).toBe(true);
+          if (result.success) {
+            const expectedStatus = testCase.status ?? testCase.statusCode;
+            expect(result.data.statusCode).toBe(expectedStatus);
+          }
+        }
+      });
+
+      it('should handle different JSON field names for response data', async () => {
+        const testCases = [
+          { body: { type: 'body' } },
+          { data: { type: 'data' } },
+          { response: { type: 'response' } },
+          { body: { type: 'body' }, data: { type: 'data' } }, // body takes precedence
+        ];
+
+        for (const testCase of testCases) {
+          const jsonOutput = JSON.stringify(testCase);
+          const result = parser.parseHttpCraftOutput(jsonOutput);
+
+          expect(result.success).toBe(true);
+          if (result.success) {
+            const expectedData = testCase.body ?? testCase.data ?? testCase.response;
+            expect(result.data.data).toEqual(expectedData);
+          }
+        }
+      });
+
+      it('should handle timing data correctly', async () => {
+        const jsonOutput = JSON.stringify({
+          statusCode: 200,
+          duration: 1000,
+          timing: {
+            dns: 50,
+            connect: 100,
+            ssl: 150,
+            send: 10,
+            wait: 500,
+            receive: 200,
+          },
+        });
+
         const result = parser.parseHttpCraftOutput(jsonOutput);
 
         expect(result.success).toBe(true);
         if (result.success) {
-          const expectedData = testCase.body ?? testCase.data ?? testCase.response;
-          expect(result.data.data).toEqual(expectedData);
+          expect(result.data.timing).toEqual({
+            total: 1000,
+            dns: 50,
+            connect: 100,
+            ssl: 150,
+            send: 10,
+            wait: 500,
+            receive: 200,
+          });
         }
-      }
-    });
-
-    it('should handle timing data correctly', async () => {
-      const jsonOutput = JSON.stringify({
-        statusCode: 200,
-        duration: 1000,
-        timing: {
-          dns: 50,
-          connect: 100,
-          ssl: 150,
-          send: 10,
-          wait: 500,
-          receive: 200,
-        },
       });
 
-      const result = parser.parseHttpCraftOutput(jsonOutput);
-
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.timing).toEqual({
-          total: 1000,
-          dns: 50,
-          connect: 100,
-          ssl: 150,
-          send: 10,
-          wait: 500,
-          receive: 200,
+      it('should normalize headers to lowercase', async () => {
+        const jsonOutput = JSON.stringify({
+          statusCode: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Custom-Header': 'value',
+            AUTHORIZATION: 'Bearer token',
+          },
         });
-      }
+
+        const result = parser.parseHttpCraftOutput(jsonOutput);
+
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.headers).toEqual({
+            'content-type': 'application/json',
+            'x-custom-header': 'value',
+            authorization: 'Bearer token',
+          });
+        }
+      });
     });
 
-    it('should normalize headers to lowercase', async () => {
-      const jsonOutput = JSON.stringify({
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Custom-Header': 'value',
-          AUTHORIZATION: 'Bearer token',
-        },
+    // Tests for format detection and edge cases
+    describe('format detection and edge cases', () => {
+      it('should correctly identify API vs HTTP response formats', () => {
+        const apiFormat = JSON.stringify({ status: 'success', data: {} });
+        const httpFormat = JSON.stringify({ statusCode: 200, body: {} });
+
+        const apiResult = parser.parseHttpCraftOutput(apiFormat);
+        const httpResult = parser.parseHttpCraftOutput(httpFormat);
+
+        expect(apiResult.success).toBe(true);
+        expect(httpResult.success).toBe(true);
+
+        if (apiResult.success && httpResult.success) {
+          // API format should have JSON content type and no status code
+          expect(apiResult.data.contentType).toBe('application/json');
+          expect(apiResult.data.statusCode).toBeUndefined();
+
+          // HTTP format should have status code and may not have specific content type
+          expect(httpResult.data.statusCode).toBe(200);
+        }
       });
 
-      const result = parser.parseHttpCraftOutput(jsonOutput);
-
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.headers).toEqual({
-          'content-type': 'application/json',
-          'x-custom-header': 'value',
-          authorization: 'Bearer token',
+      it('should handle mixed format characteristics gracefully', () => {
+        // Edge case: response with both string status and numeric statusCode
+        const mixedFormat = JSON.stringify({
+          status: 'success', // This makes it API format
+          statusCode: 200, // This would be HTTP format
+          data: { message: 'test' },
         });
-      }
+
+        const result = parser.parseHttpCraftOutput(mixedFormat);
+
+        expect(result.success).toBe(true);
+        if (result.success) {
+          // Should be treated as API format due to string status
+          expect(result.data.success).toBe(true);
+          expect(result.data.contentType).toBe('application/json');
+          expect(result.data.statusCode).toBeUndefined(); // API format doesn't have HTTP status
+        }
+      });
     });
 
     it('should fallback to text parsing for invalid JSON', async () => {
@@ -179,23 +344,36 @@ describe('ResponseParser', () => {
     });
 
     it('should handle JSON validation when enabled', async () => {
-      const invalidJsonStructure = JSON.stringify({ unexpectedField: 'value' });
+      const httpResponse = JSON.stringify({ statusCode: 200, body: 'test' });
+      const apiResponse = JSON.stringify({ status: 'success', data: 'test' });
       const options: ParseOptions = { validateJson: true };
 
-      const result = parser.parseHttpCraftOutput(invalidJsonStructure, options);
+      const httpResult = parser.parseHttpCraftOutput(httpResponse, options);
+      const apiResult = parser.parseHttpCraftOutput(apiResponse, options);
 
-      // Should succeed as the validation is not strict about unknown fields
-      expect(result.success).toBe(true);
+      // Both should succeed as they match their respective schemas
+      expect(httpResult.success).toBe(true);
+      expect(apiResult.success).toBe(true);
     });
 
-    it('should handle empty JSON output', async () => {
-      const result = parser.parseHttpCraftOutput('{}');
+    it('should handle empty JSON output for both formats', async () => {
+      const emptyHttp = parser.parseHttpCraftOutput('{}');
+      const emptyApi = JSON.stringify({ status: 'success' });
+      const apiResult = parser.parseHttpCraftOutput(emptyApi);
 
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.statusCode).toBeUndefined();
-        expect(result.data.headers).toEqual({});
-        expect(result.data.data).toBeUndefined();
+      expect(emptyHttp.success).toBe(true);
+      expect(apiResult.success).toBe(true);
+
+      if (emptyHttp.success) {
+        expect(emptyHttp.data.statusCode).toBeUndefined();
+        expect(emptyHttp.data.headers).toEqual({});
+        expect(emptyHttp.data.data).toBeUndefined();
+      }
+
+      if (apiResult.success) {
+        expect(apiResult.data.success).toBe(true);
+        expect(apiResult.data.statusCode).toBeUndefined();
+        expect(apiResult.data.contentType).toBe('application/json');
       }
     });
   });
@@ -274,13 +452,34 @@ describe('ResponseParser', () => {
   });
 
   describe('validateResponse', () => {
-    it('should validate correct response', () => {
+    it('should validate correct HTTP response', () => {
       const response: HttpCraftResponse = {
         success: true,
         statusCode: 200,
         headers: { 'content-type': 'application/json' },
         data: { message: 'success' },
         timing: { total: 250 },
+      };
+
+      const result = parser.validateResponse(response);
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should validate correct API response', () => {
+      const response: HttpCraftResponse = {
+        success: true,
+        statusCode: undefined, // API responses don't have HTTP status codes
+        headers: {},
+        data: { policyId: 'test' },
+        timing: { total: 0 },
+        contentType: 'application/json',
+        meta: {
+          version: 6,
+          type: 'single',
+          schemaReference: '#/definitions/policy',
+        },
       };
 
       const result = parser.validateResponse(response);

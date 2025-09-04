@@ -211,6 +211,13 @@ export const HttpCraftResponseSchema = z.object({
       receive: z.number().optional(),
     })
     .optional(),
+  meta: z
+    .object({
+      version: z.number().optional(),
+      schemaReference: z.string().optional(),
+      type: z.string().optional(),
+    })
+    .optional(),
 });
 
 export const ChainResponseSchema = z.object({

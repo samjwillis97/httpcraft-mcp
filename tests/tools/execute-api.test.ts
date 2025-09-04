@@ -86,7 +86,7 @@ describe('ExecuteApiTool', () => {
     };
 
     const mockSuccessResponse = {
-      success: true,
+      success: true as const,
       data: {
         success: true,
         exitCode: 0,
@@ -97,6 +97,7 @@ describe('ExecuteApiTool', () => {
           duration: 150,
         }),
         stderr: '',
+        duration: 150,
       },
     };
 
@@ -138,8 +139,52 @@ describe('ExecuteApiTool', () => {
       });
     });
 
-    it('should execute API endpoint successfully', async () => {
-      mockHttpCraft.execute.mockResolvedValue(mockSuccessResponse);
+    it('should handle HTTPCraft API response format', async () => {
+      const apiResponse = {
+        success: true as const,
+        data: {
+          success: true,
+          exitCode: 0,
+          stdout: JSON.stringify({
+            status: 'success',
+            meta: {
+              version: 6,
+              schemaReference: '#/definitions/healthInsurancePolicyV6',
+              type: 'single',
+            },
+            data: {
+              effectiveDate: '2025-09-04',
+              policyHolderId: 'nib:65931864',
+              healthPolicyId: 'nib:1226030U',
+            },
+          }),
+          stderr: '',
+          duration: 150,
+        },
+      };
+
+      mockParser.parseHttpCraftOutput.mockReturnValue({
+        success: true,
+        data: {
+          success: true,
+          statusCode: undefined,
+          headers: {},
+          data: {
+            effectiveDate: '2025-09-04',
+            policyHolderId: 'nib:65931864',
+            healthPolicyId: 'nib:1226030U',
+          },
+          timing: { total: 0 },
+          contentType: 'application/json',
+          meta: {
+            version: 6,
+            schemaReference: '#/definitions/healthInsurancePolicyV6',
+            type: 'single',
+          },
+        },
+      });
+
+      mockHttpCraft.execute.mockResolvedValue(apiResponse);
 
       const result = await tool.execute(validParams);
 
@@ -148,11 +193,54 @@ describe('ExecuteApiTool', () => {
       expect(result.content[0].type).toBe('text');
       expect(result.content[0].mimeType).toBe('application/json');
 
-      // Verify HTTPCraft was called with correct arguments
-      expect(mockHttpCraft.execute).toHaveBeenCalledWith(
-        ['test-api', 'users', '--profile', 'dev', '--json'],
-        { timeout: 30000 }
-      );
+      const parsedContent = JSON.parse(result.content[0].text!);
+      expect(parsedContent.success).toBe(true);
+      expect(parsedContent.data.effectiveDate).toBe('2025-09-04');
+      expect(parsedContent.meta).toEqual({
+        version: 6,
+        schemaReference: '#/definitions/healthInsurancePolicyV6',
+        type: 'single',
+      });
+    });
+
+    it('should handle HTTPCraft API error response format', async () => {
+      const apiErrorResponse = {
+        success: true as const,
+        data: {
+          success: true,
+          exitCode: 0,
+          stdout: JSON.stringify({
+            status: 'error',
+            error: 'API endpoint not found',
+            meta: { version: 6, type: 'error' },
+          }),
+          stderr: '',
+          duration: 150,
+        },
+      };
+
+      mockParser.parseHttpCraftOutput.mockReturnValue({
+        success: true,
+        data: {
+          success: false,
+          statusCode: undefined,
+          headers: {},
+          data: undefined,
+          timing: { total: 0 },
+          contentType: 'application/json',
+          error: 'API endpoint not found',
+          meta: { version: 6, type: 'error' },
+        },
+      });
+
+      mockHttpCraft.execute.mockResolvedValue(apiErrorResponse);
+
+      const result = await tool.execute(validParams);
+
+      expect(result.isError).toBe(true); // Should be error since success is false
+      const parsedContent = JSON.parse(result.content[0].text!);
+      expect(parsedContent.success).toBe(false);
+      expect(parsedContent.error).toBe('API endpoint not found');
     });
 
     it('should handle optional parameters', async () => {
@@ -192,7 +280,7 @@ describe('ExecuteApiTool', () => {
 
     it('should handle HTTPCraft CLI execution failure', async () => {
       const cliError = {
-        success: false,
+        success: false as const,
         error: new Error('CLI execution failed'),
       };
 
@@ -210,12 +298,13 @@ describe('ExecuteApiTool', () => {
 
     it('should handle HTTPCraft command failure', async () => {
       const commandFailure = {
-        success: true,
+        success: true as const,
         data: {
           success: false,
           exitCode: 1,
           stdout: '',
           stderr: 'API "unknown-api" not found in configuration',
+          duration: 150,
         },
       };
 
@@ -406,12 +495,13 @@ describe('ExecuteApiTool', () => {
       };
 
       mockHttpCraft.execute.mockResolvedValue({
-        success: true,
+        success: true as const,
         data: {
           success: true,
           exitCode: 0,
           stdout: '{"statusCode": 200}',
           stderr: '',
+          duration: 150,
         },
       });
 

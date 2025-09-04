@@ -28,36 +28,92 @@ export interface HttpCraftOutput {
 }
 
 // Schema for validating HTTPCraft JSON output (updated for new format)
-const HttpCraftJsonOutputSchema = z.object({
-  status: z.number().nullable().optional(),
-  statusCode: z.number().nullable().optional(),
-  statusText: z.string().optional(),
-  headers: z.record(z.string()).optional(),
-  body: z.any().optional(),
-  data: z.any().optional(),
-  response: z.any().optional(),
-  isBinary: z.boolean().optional(),
-  contentType: z.string().optional(),
-  contentLength: z.number().optional(),
-  duration: z.number().nullable().optional(),
-  totalTime: z.number().nullable().optional(),
-  timing: z
-    .object({
-      duration: z.number().nullable().optional(),
-      startTime: z.string().optional(),
-      endTime: z.string().optional(),
-      // Legacy timing fields
-      dns: z.number().nullable().optional(),
-      connect: z.number().nullable().optional(),
-      ssl: z.number().nullable().optional(),
-      send: z.number().nullable().optional(),
-      wait: z.number().nullable().optional(),
-      receive: z.number().nullable().optional(),
-    })
-    .optional(),
-});
+const HttpCraftJsonOutputSchema = z.union([
+  // HTTP response format
+  z.object({
+    status: z.number().nullable().optional(),
+    statusCode: z.number().nullable().optional(),
+    statusText: z.string().optional(),
+    headers: z.record(z.string()).optional(),
+    body: z.any().optional(),
+    data: z.any().optional(),
+    response: z.any().optional(),
+    isBinary: z.boolean().optional(),
+    contentType: z.string().optional(),
+    contentLength: z.number().optional(),
+    duration: z.number().nullable().optional(),
+    totalTime: z.number().nullable().optional(),
+    timing: z
+      .object({
+        duration: z.number().nullable().optional(),
+        startTime: z.string().optional(),
+        endTime: z.string().optional(),
+        // Legacy timing fields
+        dns: z.number().nullable().optional(),
+        connect: z.number().nullable().optional(),
+        ssl: z.number().nullable().optional(),
+        send: z.number().nullable().optional(),
+        wait: z.number().nullable().optional(),
+        receive: z.number().nullable().optional(),
+      })
+      .optional(),
+  }),
+  // API response format
+  z.object({
+    status: z.union([z.literal('success'), z.literal('error')]),
+    data: z.any().optional(),
+    error: z.string().optional(),
+    meta: z
+      .object({
+        version: z.number().optional(),
+        schemaReference: z.string().optional(),
+        type: z.string().optional(),
+      })
+      .optional(),
+  }),
+]);
 
-type HttpCraftJsonOutput = z.infer<typeof HttpCraftJsonOutputSchema>;
+// Type guards for discriminating union
+interface HttpFormatOutput {
+  status?: number | null;
+  statusCode?: number | null;
+  statusText?: string;
+  headers?: Record<string, string>;
+  body?: any;
+  data?: any;
+  response?: any;
+  isBinary?: boolean;
+  contentType?: string;
+  contentLength?: number;
+  duration?: number | null;
+  totalTime?: number | null;
+  timing?: {
+    duration?: number | null;
+    startTime?: string;
+    endTime?: string;
+    dns?: number | null;
+    connect?: number | null;
+    ssl?: number | null;
+    send?: number | null;
+    wait?: number | null;
+    receive?: number | null;
+  };
+}
+
+interface ApiFormatOutput {
+  status: 'success' | 'error';
+  data?: any;
+  error?: string;
+  meta?: {
+    version?: number;
+    schemaReference?: string;
+    type?: string;
+  };
+}
+
+function isApiFormat(output: any): output is ApiFormatOutput {
+  return typeof output.status === 'string';
+}
 
 export interface ParseOptions {
   maxResponseSize?: number;
@@ -189,32 +245,13 @@ export class ResponseParser {
         }
       }
 
-      const parsed = jsonOutput as HttpCraftJsonOutput;
-
-      const statusCodeValue = parsed.status ?? parsed.statusCode;
-      const responseData = this.extractResponseData(parsed);
-
-      const response: HttpCraftResponse = {
-        success: true,
-        statusCode: statusCodeValue === null ? undefined : statusCodeValue,
-        headers: this.normalizeHeaders(parsed.headers || {}),
-        data: responseData,
-        timing: {
-          total: parsed.timing?.duration || parsed.duration || parsed.totalTime || 0,
-          dns: parsed.timing?.dns === null ? undefined : parsed.timing?.dns,
-          connect: parsed.timing?.connect === null ? undefined : parsed.timing?.connect,
-          ssl: parsed.timing?.ssl === null ? undefined : parsed.timing?.ssl,
-          send: parsed.timing?.send === null ? undefined : parsed.timing?.send,
-          wait: parsed.timing?.wait === null ? undefined : parsed.timing?.wait,
-          receive: parsed.timing?.receive === null ? undefined : parsed.timing?.receive,
-        },
-        // Add new fields from HTTPCraft update
-        statusText: parsed.statusText,
-        isBinary: parsed.isBinary,
-        contentType: parsed.contentType,
-        contentLength: parsed.contentLength,
-      };
-      return { success: true, data: response };
+      // Check if this is the new API response format (has string status)
+      if (isApiFormat(jsonOutput)) {
+        return this.parseApiFormat(jsonOutput);
+      } else {
+        // HTTP response format
+        return this.parseHttpFormat(jsonOutput);
+      }
     } catch (parseError) {
       logger.debug('Failed to parse HTTPCraft JSON output', {
         error: (parseError as Error).message,
@@ -224,6 +261,58 @@ export class ResponseParser {
         error: new Error(`JSON parsing failed: ${(parseError as Error).message}`),
       };
     }
+  }
+
+  /**
+   * Parse new HTTPCraft API response format
+   */
+  private parseApiFormat(parsed: ApiFormatOutput): Result<HttpCraftResponse> {
+    const response: HttpCraftResponse = {
+      success: parsed.status === 'success',
+      statusCode: undefined, // API responses don't have HTTP status codes
+      headers: {},
+      data: parsed.data,
+      timing: {
+        total: 0, // API responses don't have timing info
+      },
+      statusText: undefined,
+      isBinary: false,
+      contentType: 'application/json',
+      contentLength: undefined,
+      meta: parsed.meta,
+      error: parsed.error,
+    };
+
+    return { success: true, data: response };
+  }
+
+  /**
+   * Parse traditional HTTP response format
+   */
+  private parseHttpFormat(parsed: HttpFormatOutput): Result<HttpCraftResponse> {
+    const statusCodeValue = parsed.status ?? parsed.statusCode;
+    const responseData = this.extractResponseData(parsed);
+
+    const response: HttpCraftResponse = {
+      success: true,
+      statusCode: statusCodeValue === null ? undefined : statusCodeValue,
+      headers: this.normalizeHeaders(parsed.headers || {}),
+      data: responseData,
+      timing: {
+        total: parsed.timing?.duration || parsed.duration || parsed.totalTime || 0,
+        dns: parsed.timing?.dns === null ? undefined : parsed.timing?.dns,
+        connect: parsed.timing?.connect === null ? undefined : parsed.timing?.connect,
+        ssl: parsed.timing?.ssl === null ? undefined : parsed.timing?.ssl,
+        send: parsed.timing?.send === null ? undefined : parsed.timing?.send,
+        wait: parsed.timing?.wait === null ? undefined : parsed.timing?.wait,
+        receive: parsed.timing?.receive === null ? undefined : parsed.timing?.receive,
+      },
+      statusText: parsed.statusText,
+      isBinary: parsed.isBinary,
+      contentType: parsed.contentType,
+      contentLength: parsed.contentLength,
+    };
+    return { success: true, data: response };
   }
 
   /**
@@ -354,7 +443,7 @@ export class ResponseParser {
   /**
    * Extract response data from JSON output
    */
-  private extractResponseData(parsed: HttpCraftJsonOutput): any {
+  private extractResponseData(parsed: HttpFormatOutput): any {
     // Priority: body > data > response
     // Handle the case where data is explicitly null vs undefined
     if (parsed.body !== undefined) {

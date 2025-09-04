@@ -1,0 +1,47 @@
+{
+  "status": 400,
+  "statusText": "Bad Request",
+  "headers": {
+    "date": "Thu, 04 Sep 2025 01:06:09 GMT",
+    "content-type": "application/json",
+    "content-length": "231",
+    "connection": "keep-alive",
+    "server": "cloudflare",
+    "cf-ray": "9799952768e3f215-SYD",
+    "cf-cache-status": "DYNAMIC",
+    "access-control-allow-origin": "*",
+    "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
+    "access-control-allow-headers": "Content-Type",
+    "access-control-allow-methods": "OPTIONS,GET,POST,PUT,DELETE",
+    "x-amz-apigw-id": "QWjgQFyfSwMEuww=",
+    "x-amzn-requestid": "e83abb0b-1b33-4ef1-8b1c-f956eea37b76",
+    "x-amzn-trace-id": "Root=1-68b8e601-1802f59f2a70bf7a59b31688",
+    "x-content-type-options": "nosniff",
+    "vary": "Accept-Encoding",
+    "set-cookie": "_cfuvid=wEtcf5pSS3HfupzK_aWFGI9Ogdo_RNWbZBX1.s9ENik-1756947969311-0.0.1.1-604800000; path=/; domain=.nib-api-kaos.com; HttpOnly; Secure; SameSite=None"
+  },
+  "timing": {
+    "duration": 360,
+    "startTime": 1756947968934,
+    "endTime": 1756947969294
+  },
+  "responseData": {
+    "status": "fail",
+    "meta": {
+      "version": "1",
+      "type": "single",
+      "schemaReference": "#/definitions/failureResponse"
+    },
+    "message": "Validation error",
+    "errors": [
+      {
+        "message": "Malformed page key",
+        "code": "value.invalid_format",
+        "target": "paging-key"
+      }
+    ]
+  },
+  "profile": "nib-family-policy",
+  "endpoint": "getPHIClaims",
+  "api": "aion"
+}

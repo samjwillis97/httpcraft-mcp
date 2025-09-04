@@ -10,21 +10,40 @@ import type { HttpCraftResponse, ChainResponse, DiscoveryResponse } from '../sch
  * Format a successful HTTP response
  */
 export function formatHttpResponse(response: HttpCraftResponse): CallToolResult {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const responseData: any = {
+    success: response.success,
+    statusCode: response.statusCode,
+    headers: response.headers,
+    data: response.data,
+    timing: response.timing,
+  };
+
+  // Include optional fields if they exist
+  if (response.error !== undefined) {
+    responseData.error = response.error;
+  }
+  if (response.statusText !== undefined) {
+    responseData.statusText = response.statusText;
+  }
+  if (response.isBinary !== undefined) {
+    responseData.isBinary = response.isBinary;
+  }
+  if (response.contentType !== undefined) {
+    responseData.contentType = response.contentType;
+  }
+  if (response.contentLength !== undefined) {
+    responseData.contentLength = response.contentLength;
+  }
+  if (response.meta !== undefined) {
+    responseData.meta = response.meta;
+  }
+
   return {
     content: [
       {
         type: 'text',
-        text: JSON.stringify(
-          {
-            success: response.success,
-            statusCode: response.statusCode,
-            headers: response.headers,
-            data: response.data,
-            timing: response.timing,
-          },
-          null,
-          2
-        ),
+        text: JSON.stringify(responseData, null, 2),
         mimeType: 'application/json',
       },
     ],
