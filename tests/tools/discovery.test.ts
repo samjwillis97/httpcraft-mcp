@@ -57,7 +57,9 @@ describe('Discovery Tools', () => {
 
     it('should have correct name and description', () => {
       expect(tool.name).toBe('httpcraft_list_apis');
-      expect(tool.description).toBe('List all available APIs from HTTPCraft configuration');
+      expect(tool.description).toContain('List all available APIs from HTTPCraft configuration');
+      expect(tool.description).toContain('Discover the APIs configured in your HTTPCraft setup');
+      expect(tool.description).toContain('Follow up with httpcraft_list_endpoints');
     });
 
     it('should execute successfully and return API list', async () => {
@@ -120,7 +122,11 @@ describe('Discovery Tools', () => {
 
     it('should have correct name and description', () => {
       expect(tool.name).toBe('httpcraft_list_endpoints');
-      expect(tool.description).toBe('List all endpoints for a specific API');
+      expect(tool.description).toContain('List all endpoints for a specific API');
+      expect(tool.description).toContain(
+        'Discover the available endpoints within a specific API configuration'
+      );
+      expect(tool.description).toContain('Typically used after httpcraft_list_apis');
     });
 
     it('should execute successfully and return endpoint list', async () => {
@@ -195,7 +201,11 @@ describe('Discovery Tools', () => {
 
     it('should have correct name and description', () => {
       expect(tool.name).toBe('httpcraft_list_profiles');
-      expect(tool.description).toBe('List all available profiles from HTTPCraft configuration');
+      expect(tool.description).toContain(
+        'List all available profiles from HTTPCraft configuration'
+      );
+      expect(tool.description).toContain('Profiles are environment-specific configurations');
+      expect(tool.description).toContain('Essential for httpcraft_execute_api calls');
     });
 
     it('should execute successfully and return profile list', async () => {
@@ -302,7 +312,9 @@ describe('Discovery Tools', () => {
 
     it('should have correct name and description', () => {
       expect(tool.name).toBe('httpcraft_describe_api');
-      expect(tool.description).toBe('Get detailed information about a specific API');
+      expect(tool.description).toContain('Get detailed information about a specific API');
+      expect(tool.description).toContain('Provides comprehensive details about an API');
+      expect(tool.description).toContain('foundation knowledge needed for effective API testing');
     });
 
     it('should execute successfully and return API description', async () => {
@@ -355,7 +367,11 @@ describe('Discovery Tools', () => {
 
     it('should have correct name and description', () => {
       expect(tool.name).toBe('httpcraft_describe_endpoint');
-      expect(tool.description).toBe('Get detailed information about a specific endpoint');
+      expect(tool.description).toContain('Get detailed information about a specific endpoint');
+      expect(tool.description).toContain(
+        'Provides comprehensive details about a specific endpoint'
+      );
+      expect(tool.description).toContain('Essential step before calling httpcraft_execute_api');
     });
 
     it('should execute successfully and return endpoint description', async () => {
@@ -392,7 +408,9 @@ describe('Discovery Tools', () => {
 
     it('should have correct name and description', () => {
       expect(tool.name).toBe('httpcraft_describe_profile');
-      expect(tool.description).toBe('Get detailed information about a specific profile');
+      expect(tool.description).toContain('Get detailed information about a specific profile');
+      expect(tool.description).toContain('Profiles define environment-specific settings');
+      expect(tool.description).toContain('Essential for understanding how different environments');
     });
 
     it('should execute successfully and return profile description', async () => {

@@ -24,8 +24,37 @@ type HttpCraftExecuteResult = any;
 
 export class ExecuteChainTool extends BaseTool {
   public readonly name = 'httpcraft_execute_chain';
-  public readonly description =
-    'Execute a request chain using HTTPCraft with variable passing between steps';
+  public readonly description = `Execute a request chain using HTTPCraft with variable passing between steps.
+
+Chains enable complex multi-step workflows where requests depend on previous responses. Perfect for authentication flows, multi-step API operations, and testing complete user journeys that require sequential API calls.
+
+Chain capabilities:
+- Sequential request execution with automatic variable extraction
+- Pass data between requests (auth tokens, IDs, computed values)
+- Handle dependent API calls automatically
+- Aggregate results from multiple requests
+- Optional parallel execution for independent steps
+- Fail-fast or continue-on-error execution modes
+
+Common workflow patterns:
+- Authentication flow: login → get token → use token for API calls
+- Resource creation: create resource → get ID → perform operations on resource
+- Data pipeline: fetch data → transform → POST to another service
+- Integration testing: setup → execute tests → cleanup
+
+Chain configuration:
+- Chains are defined in HTTPCraft configuration files
+- Each step can reference variables from previous steps
+- Variable extraction uses JSONPath or custom extractors
+- Error handling can be configured per step or globally
+
+Performance considerations:
+- Chain execution typically takes longer than single requests
+- Use timeout parameter for complex chains (default: 60 seconds)
+- Consider parallel execution for independent operations
+- Use stopOnFailure=true to halt on first error for fail-fast behavior
+
+Use httpcraft_list_chains to discover available chains, or httpcraft_describe_chain for detailed chain configuration.`;
   public readonly inputSchema = ExecuteChainSchema;
 
   constructor(httpcraft: HttpCraftCli) {

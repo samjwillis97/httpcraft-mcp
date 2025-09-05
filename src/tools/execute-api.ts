@@ -19,8 +19,24 @@ type HttpCraftExecuteResult = any;
 
 export class ExecuteApiTool extends BaseTool {
   public readonly name = 'httpcraft_execute_api';
-  public readonly description =
-    'Execute a configured API endpoint using HTTPCraft with profiles and environments';
+  public readonly description = `Execute a configured API endpoint using HTTPCraft with profiles and environments.
+
+Use this tool for testing pre-configured API endpoints with built-in authentication, variable substitution, and environment-specific settings. This is the preferred method when you have HTTPCraft configuration files defining your APIs.
+
+Typical workflow:
+1. Use httpcraft_list_apis to discover available APIs
+2. Use httpcraft_list_endpoints to see available endpoints for an API
+3. Use httpcraft_describe_endpoint to understand endpoint requirements and parameters
+4. Execute the endpoint with appropriate profile and variables
+
+Key concepts:
+- APIs: Pre-configured service definitions with base URLs, authentication, and endpoint definitions
+- Endpoints: Specific API operations (GET /users, POST /orders, etc.) with defined parameters
+- Profiles: Environment-specific configurations containing authentication credentials, base URLs, timeouts, and default headers
+- Variables: Dynamic values that can be injected into requests (user IDs, tokens, etc.)
+- Environments: Optional environment overrides for multi-stage deployments (dev, staging, prod)
+
+Use this over httpcraft_execute_request when you have established API configurations and want to leverage HTTPCraft's advanced features like authentication flows, variable resolution, and configuration management.`;
   public readonly inputSchema = ExecuteApiSchema;
 
   constructor(httpcraft: HttpCraftCli) {

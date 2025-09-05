@@ -26,19 +26,25 @@ export const UrlSchema = z.string().url('Must be a valid URL');
 export const HeadersSchema = z
   .record(z.string())
   .optional()
-  .describe('HTTP headers as key-value pairs');
+  .describe(
+    'HTTP headers as key-value pairs. Common headers: Content-Type, Authorization, Accept, User-Agent, X-API-Key'
+  );
 
 // Config path validation
 export const ConfigPathSchema = z
   .string()
   .optional()
-  .describe('Optional path to HTTPCraft configuration file');
+  .describe(
+    'Optional path to HTTPCraft configuration file. If not specified, HTTPCraft uses its default configuration discovery (looks for .httpcraft.yml, httpcraft.yml, etc.)'
+  );
 
 // Environment variables
 export const VariablesSchema = z
   .record(z.any())
   .optional()
-  .describe('Variable overrides as key-value pairs');
+  .describe(
+    'Variable overrides as key-value pairs. Variables can be referenced in URLs, headers, and body using HTTPCraft templating syntax. These override variables defined in configuration files'
+  );
 
 /**
  * Schema for httpcraft_execute_api tool
@@ -47,54 +53,104 @@ export const ExecuteApiSchema = z.object({
   api: z
     .string()
     .min(1, 'API name cannot be empty')
-    .describe('API name from HTTPCraft configuration'),
+    .describe(
+      'API name from HTTPCraft configuration. Use httpcraft_list_apis to discover available APIs.'
+    ),
 
-  endpoint: z.string().min(1, 'Endpoint name cannot be empty').describe('Endpoint name to execute'),
+  endpoint: z
+    .string()
+    .min(1, 'Endpoint name cannot be empty')
+    .describe(
+      'Endpoint name to execute. Use httpcraft_list_endpoints to see available endpoints for the API.'
+    ),
 
   profile: z
     .string()
     .min(1, 'Profile name cannot be empty')
-    .describe('Profile to use for execution'),
+    .describe(
+      'Profile to use for execution. Profiles contain authentication, environment settings, and variables. Use httpcraft_list_profiles to see available profiles.'
+    ),
 
-  environment: z.string().optional().describe('Optional environment override'),
+  environment: z
+    .string()
+    .optional()
+    .describe(
+      'Optional environment override for multi-stage deployments (dev, staging, prod). Overrides profile-specific environment settings.'
+    ),
 
-  variables: VariablesSchema,
+  variables: VariablesSchema.describe(
+    'Variable overrides as key-value pairs. These override variables defined in profiles, APIs, or endpoints. Use for dynamic values like user IDs, tokens, or test data.'
+  ),
 
-  configPath: ConfigPathSchema,
+  configPath: ConfigPathSchema.describe(
+    "Optional path to HTTPCraft configuration file. If not specified, uses HTTPCraft's default configuration discovery."
+  ),
 
-  timeout: z.number().positive().optional().describe('Request timeout in milliseconds'),
+  timeout: z
+    .number()
+    .positive()
+    .optional()
+    .describe(
+      'Request timeout in milliseconds. Overrides profile timeout settings. Default: 30000ms (30 seconds).'
+    ),
 });
 
 /**
  * Schema for httpcraft_execute_request tool
  */
 export const ExecuteRequestSchema = z.object({
-  method: HttpMethodSchema.describe('HTTP method to use'),
+  method: HttpMethodSchema.describe(
+    'HTTP method to use (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)'
+  ),
 
-  url: UrlSchema.describe('Target URL for the request'),
+  url: UrlSchema.describe(
+    'Target URL for the request. Must be a complete, valid URL including protocol (http:// or https://)'
+  ),
 
-  headers: HeadersSchema,
+  headers: HeadersSchema.describe(
+    'HTTP headers as key-value pairs. Common headers: Content-Type, Authorization, Accept, User-Agent'
+  ),
 
-  body: z.string().optional().describe('Request body (for POST, PUT, PATCH methods)'),
+  body: z
+    .string()
+    .optional()
+    .describe(
+      'Request body content for POST, PUT, PATCH methods. Can be JSON, XML, form data, or plain text depending on Content-Type header'
+    ),
 
   profile: z
     .string()
     .optional()
-    .describe('Optional profile to use for authentication and settings'),
+    .describe(
+      'Optional profile to use for authentication and default settings. Provides authentication credentials and default headers from HTTPCraft configuration'
+    ),
 
-  variables: VariablesSchema,
+  variables: VariablesSchema.describe(
+    'Variable overrides as key-value pairs for dynamic request parameters. Variables can be referenced in URL, headers, or body using HTTPCraft templating'
+  ),
 
-  configPath: ConfigPathSchema,
+  configPath: ConfigPathSchema.describe(
+    'Optional path to HTTPCraft configuration file. Required if using profiles or variables'
+  ),
 
-  timeout: z.number().positive().optional().describe('Request timeout in milliseconds'),
+  timeout: z
+    .number()
+    .positive()
+    .optional()
+    .describe('Request timeout in milliseconds. Default: 30000ms (30 seconds)'),
 
-  followRedirects: z.boolean().optional().describe('Whether to follow HTTP redirects'),
+  followRedirects: z
+    .boolean()
+    .optional()
+    .describe('Whether to automatically follow HTTP redirects (3xx status codes). Default: true'),
 
   maxRedirects: z
     .number()
     .nonnegative()
     .optional()
-    .describe('Maximum number of redirects to follow'),
+    .describe(
+      'Maximum number of redirects to follow. Default: 5. Only applies when followRedirects is true'
+    ),
 });
 
 /**
@@ -104,55 +160,99 @@ export const ExecuteChainSchema = z.object({
   chain: z
     .string()
     .min(1, 'Chain name cannot be empty')
-    .describe('Name of the request chain to execute'),
+    .describe(
+      'Name of the request chain to execute. Chains are defined in HTTPCraft configuration and contain sequential API calls with variable passing'
+    ),
 
-  profile: z.string().optional().describe('Optional profile to use for the chain'),
+  profile: z
+    .string()
+    .optional()
+    .describe(
+      'Optional profile to use for the entire chain. Provides authentication and environment settings for all chain steps'
+    ),
 
-  environment: z.string().optional().describe('Optional environment override'),
+  environment: z
+    .string()
+    .optional()
+    .describe('Optional environment override for the chain execution (dev, staging, prod)'),
 
-  variables: VariablesSchema,
+  variables: VariablesSchema.describe(
+    'Initial variables for the chain execution. These are available to all steps and can be overridden by step-specific variables or extracted values'
+  ),
 
-  configPath: ConfigPathSchema,
+  configPath: ConfigPathSchema.describe(
+    'Optional path to HTTPCraft configuration file containing the chain definition'
+  ),
 
   timeout: z
     .number()
     .positive()
     .optional()
-    .describe('Total timeout for the entire chain in milliseconds'),
+    .describe(
+      'Total timeout for the entire chain execution in milliseconds. Default: 60000ms (60 seconds). Should be longer than single request timeouts'
+    ),
 
   stopOnFailure: z
     .boolean()
     .optional()
-    .describe('Whether to stop chain execution on first failure'),
+    .describe(
+      'Whether to stop chain execution on the first failed step. Default: true. Set to false to continue executing remaining steps even after failures'
+    ),
 
   parallel: z
     .boolean()
     .optional()
-    .describe('Whether to execute chain steps in parallel where possible'),
+    .describe(
+      'Whether to execute independent chain steps in parallel where possible. Default: false. Improves performance for chains with independent operations'
+    ),
 });
 
 /**
  * Schema for discovery tools
  */
 export const ListApisSchema = z.object({
-  configPath: ConfigPathSchema,
+  configPath: ConfigPathSchema.describe(
+    "Optional path to HTTPCraft configuration file. If not specified, uses HTTPCraft's default configuration discovery"
+  ),
 });
 
 export const ListEndpointsSchema = z.object({
-  api: z.string().min(1, 'API name cannot be empty').describe('API name to list endpoints for'),
+  api: z
+    .string()
+    .min(1, 'API name cannot be empty')
+    .describe(
+      'API name to list endpoints for. Use httpcraft_list_apis to discover available API names'
+    ),
 
-  configPath: ConfigPathSchema,
+  configPath: ConfigPathSchema.describe(
+    'Optional path to HTTPCraft configuration file containing the API definition'
+  ),
 });
 
 export const ListProfilesSchema = z.object({
-  configPath: ConfigPathSchema,
+  configPath: ConfigPathSchema.describe(
+    'Optional path to HTTPCraft configuration file containing profile definitions'
+  ),
 });
 
 export const ListVariablesSchema = z.object({
-  configPath: ConfigPathSchema,
-  profiles: z.array(z.string()).optional().describe('Profiles to show variables for'),
-  api: z.string().optional().describe('API to show variables for'),
-  endpoint: z.string().optional().describe('Endpoint to show variables for (requires api)'),
+  configPath: ConfigPathSchema.describe('Optional path to HTTPCraft configuration file'),
+  profiles: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'Specific profiles to show variables for. Shows variables from all profiles if not specified'
+    ),
+  api: z
+    .string()
+    .optional()
+    .describe('Specific API to show variables for. Shows API-level variables and inheritance'),
+  endpoint: z
+    .string()
+    .optional()
+    .describe(
+      'Specific endpoint to show variables for. Requires api parameter. Shows endpoint-specific variables and full inheritance chain'
+    ),
 });
 
 export const ListChainsSchema = z.object({
@@ -163,22 +263,36 @@ export const ListChainsSchema = z.object({
  * Schemas for describe tools
  */
 export const DescribeApiSchema = z.object({
-  name: z.string().min(1, 'API name cannot be empty').describe('API name to describe'),
-  configPath: ConfigPathSchema,
+  name: z
+    .string()
+    .min(1, 'API name cannot be empty')
+    .describe('API name to describe. Use httpcraft_list_apis to discover available API names'),
+  configPath: ConfigPathSchema.describe(
+    'Optional path to HTTPCraft configuration file containing the API definition'
+  ),
 });
 
 export const DescribeEndpointSchema = z.object({
-  api: z.string().min(1, 'API name cannot be empty').describe('API name'),
+  api: z.string().min(1, 'API name cannot be empty').describe('API name containing the endpoint'),
   endpoint: z
     .string()
     .min(1, 'Endpoint name cannot be empty')
-    .describe('Endpoint name to describe'),
-  configPath: ConfigPathSchema,
+    .describe(
+      'Endpoint name to describe. Use httpcraft_list_endpoints to discover available endpoints for the API'
+    ),
+  configPath: ConfigPathSchema.describe('Optional path to HTTPCraft configuration file'),
 });
 
 export const DescribeProfileSchema = z.object({
-  name: z.string().min(1, 'Profile name cannot be empty').describe('Profile name to describe'),
-  configPath: ConfigPathSchema,
+  name: z
+    .string()
+    .min(1, 'Profile name cannot be empty')
+    .describe(
+      'Profile name to describe. Use httpcraft_list_profiles to discover available profile names'
+    ),
+  configPath: ConfigPathSchema.describe(
+    'Optional path to HTTPCraft configuration file containing the profile definition'
+  ),
 });
 
 /**

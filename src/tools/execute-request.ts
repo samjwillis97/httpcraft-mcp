@@ -18,8 +18,26 @@ import type { HttpCraftCli } from '../httpcraft/cli.js';
 type HttpCraftExecuteResult = any;
 export class ExecuteRequestTool extends BaseTool {
   public readonly name = 'httpcraft_execute_request';
-  public readonly description =
-    'Execute a standalone HTTP request using HTTPCraft with full control over method, URL, headers, and body';
+  public readonly description = `Execute a standalone HTTP request using HTTPCraft with full control over method, URL, headers, and body.
+
+Use this tool for ad-hoc HTTP requests, debugging, testing one-off endpoints, or when you don't have pre-configured API definitions. This provides direct control over all request parameters while still benefiting from HTTPCraft's response parsing and error handling.
+
+Common use cases:
+- Testing new API endpoints before adding them to configuration
+- Making one-off requests with custom headers or authentication
+- Debugging API responses with full request control
+- Testing external APIs without creating formal configurations
+- Quick API exploration and validation
+
+Features:
+- Full HTTP method support (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)
+- Custom headers and request body
+- Optional profile integration for authentication and default settings
+- Variable substitution for dynamic request parameters
+- Redirect handling with configurable limits
+- Response parsing with timing and metadata
+
+For established APIs with repeated usage, prefer httpcraft_execute_api which provides better configuration management, authentication flows, and variable resolution.`;
   public readonly inputSchema = ExecuteRequestSchema;
 
   constructor(httpcraft: HttpCraftCli) {

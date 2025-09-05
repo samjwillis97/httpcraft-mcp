@@ -58,9 +58,11 @@ describe('ExecuteApiTool', () => {
   describe('constructor', () => {
     it('should initialize with correct properties', () => {
       expect(tool.name).toBe('httpcraft_execute_api');
-      expect(tool.description).toBe(
+      expect(tool.description).toContain(
         'Execute a configured API endpoint using HTTPCraft with profiles and environments'
       );
+      expect(tool.description).toContain('Use this tool for testing pre-configured API endpoints');
+      expect(tool.description).toContain('Typical workflow:');
       expect(tool.inputSchema).toBeDefined();
     });
   });
@@ -70,8 +72,11 @@ describe('ExecuteApiTool', () => {
       const definition = tool.getToolDefinition();
 
       expect(definition.name).toBe('httpcraft_execute_api');
-      expect(definition.description).toBe(
+      expect(definition.description).toContain(
         'Execute a configured API endpoint using HTTPCraft with profiles and environments'
+      );
+      expect(definition.description).toContain(
+        'Use this tool for testing pre-configured API endpoints'
       );
       expect(definition.inputSchema).toBeDefined();
       expect(definition.inputSchema.type).toBe('object');

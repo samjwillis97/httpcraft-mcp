@@ -106,7 +106,25 @@ class HttpCraftMcpServer {
           ...registryTools,
           {
             name: 'httpcraft_health',
-            description: 'Check the health status of the HTTPCraft MCP server',
+            description: `Check the health status of the HTTPCraft MCP server.
+
+Performs a comprehensive health check of the HTTPCraft MCP server including HTTPCraft CLI availability, server status, memory usage, and operational metrics.
+
+Returns:
+- Server health status (healthy/unhealthy)
+- HTTPCraft CLI availability and version
+- Server uptime and performance metrics
+- Memory usage and system information
+- Configuration and operational details
+
+Use this tool to:
+- Verify HTTPCraft MCP server is operational
+- Check HTTPCraft CLI installation and accessibility
+- Monitor server performance and resource usage
+- Diagnose connectivity or configuration issues
+- Validate server setup before performing operations
+
+Essential for troubleshooting and ensuring the HTTPCraft integration is working properly.`,
             inputSchema: {
               type: 'object',
               properties: {},

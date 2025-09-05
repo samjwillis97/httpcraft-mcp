@@ -26,14 +26,6 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
-        # HTTPCraft CLI package
-        httpcraft-mock = pkgs.writeScriptBin "httpcraft-mock" ''
-          #!${pkgs.bash}/bin/bash
-          echo "HTTPCraft CLI mock for development"
-          echo "Version: 1.0.0"
-          echo "Args: $@"
-        '';
-
         # Pre-commit hooks configuration
         pre-commit-check = git-hooks.lib.${system}.run {
           src = ./.;
@@ -95,6 +87,12 @@
         # Pre-commit hooks check
         checks.pre-commit-check = pre-commit-check;
 
+        # Applications
+        apps.default = {
+          type = "app";
+          program = "${self.packages.${system}.default}/bin/httpcraft-mcp";
+        };
+
         devShells.default = pkgs.mkShell {
           inherit (pre-commit-check) shellHook;
           buildInputs = with pkgs; [
@@ -112,7 +110,6 @@
             git
 
             # HTTPCraft CLI (mock for now)
-            httpcraft-mock
             httpcraft.packages.${system}.default
 
             # Shell utilities
@@ -132,19 +129,44 @@
 
           src = ./.;
 
-          npmDepsHash = ""; # Will be filled when package.json exists
+          npmDepsHash = "sha256-L9qgmq4Q/lbtPlL5x2x+D9I7/9UpUxorGzBXy0x8SwQ=";
 
           buildPhase = ''
             npm run build
-          '';
+          ''; # Will be filled when package.json exists
 
           installPhase = ''
+            mkdir -p $out/lib/httpcraft-mcp
             mkdir -p $out/bin
-            cp -r dist $out/
-            cp package.json $out/
+
+            # Copy built JavaScript files and package.json
+            cp -r dist $out/lib/httpcraft-mcp/
+            cp -r node_modules $out/lib/httpcraft-mcp/
+            cp package.json $out/lib/httpcraft-mcp/
+
+            # Create executable wrapper script using substituteInPlace
+            cat > $out/bin/httpcraft-mcp << 'EOF'
+            #!/usr/bin/env bash
+            exec @NODE_BIN@ @OUT_PATH@/lib/httpcraft-mcp/dist/server.js "$@"
+            EOF
+
+            ${pkgs.buildPackages.gnused}/bin/sed -i \
+              -e "s|@NODE_BIN@|${pkgs.nodejs_20}/bin/node|g" \
+              -e "s|@OUT_PATH@|$out|g" \
+              $out/bin/httpcraft-mcp
+            chmod +x $out/bin/httpcraft-mcp
+
+            # Also make the server.js directly executable for compatibility
+            chmod +x $out/lib/httpcraft-mcp/dist/server.js
           '';
+
+          meta = with pkgs.lib; {
+            description = "HTTPCraft MCP - Model Context Protocol server for HTTPCraft CLI";
+            license = licenses.mit;
+            maintainers = [ ];
+            platforms = platforms.all;
+          };
         };
       }
     );
 }
-

@@ -55,9 +55,11 @@ describe('ExecuteChainTool', () => {
   describe('constructor', () => {
     it('should initialize with correct properties', () => {
       expect(tool.name).toBe('httpcraft_execute_chain');
-      expect(tool.description).toBe(
+      expect(tool.description).toContain(
         'Execute a request chain using HTTPCraft with variable passing between steps'
       );
+      expect(tool.description).toContain('Chains enable complex multi-step workflows');
+      expect(tool.description).toContain('Chain capabilities:');
       expect(tool.inputSchema).toBeDefined();
     });
   });
@@ -67,9 +69,10 @@ describe('ExecuteChainTool', () => {
       const definition = tool.getToolDefinition();
 
       expect(definition.name).toBe('httpcraft_execute_chain');
-      expect(definition.description).toBe(
+      expect(definition.description).toContain(
         'Execute a request chain using HTTPCraft with variable passing between steps'
       );
+      expect(definition.description).toContain('Chains enable complex multi-step workflows');
       expect(definition.inputSchema).toBeDefined();
       expect(definition.inputSchema.type).toBe('object');
     });

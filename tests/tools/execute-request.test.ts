@@ -55,9 +55,11 @@ describe('ExecuteRequestTool', () => {
   describe('constructor', () => {
     it('should initialize with correct properties', () => {
       expect(tool.name).toBe('httpcraft_execute_request');
-      expect(tool.description).toBe(
+      expect(tool.description).toContain(
         'Execute a standalone HTTP request using HTTPCraft with full control over method, URL, headers, and body'
       );
+      expect(tool.description).toContain('Use this tool for ad-hoc HTTP requests');
+      expect(tool.description).toContain('Common use cases:');
       expect(tool.inputSchema).toBeDefined();
     });
   });
@@ -67,9 +69,10 @@ describe('ExecuteRequestTool', () => {
       const definition = tool.getToolDefinition();
 
       expect(definition.name).toBe('httpcraft_execute_request');
-      expect(definition.description).toBe(
+      expect(definition.description).toContain(
         'Execute a standalone HTTP request using HTTPCraft with full control over method, URL, headers, and body'
       );
+      expect(definition.description).toContain('Use this tool for ad-hoc HTTP requests');
       expect(definition.inputSchema).toBeDefined();
       expect(definition.inputSchema.type).toBe('object');
     });
