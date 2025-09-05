@@ -62,7 +62,7 @@ describe('ExecuteApiTool', () => {
         'Execute a configured API endpoint using HTTPCraft with profiles and environments'
       );
       expect(tool.description).toContain('Use this tool for testing pre-configured API endpoints');
-      expect(tool.description).toContain('Typical workflow:');
+      expect(tool.description).toContain('## Workflow & Discovery');
       expect(tool.inputSchema).toBeDefined();
     });
   });

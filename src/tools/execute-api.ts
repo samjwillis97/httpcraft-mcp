@@ -23,18 +23,92 @@ export class ExecuteApiTool extends BaseTool {
 
 Use this tool for testing pre-configured API endpoints with built-in authentication, variable substitution, and environment-specific settings. This is the preferred method when you have HTTPCraft configuration files defining your APIs.
 
-Typical workflow:
+## Workflow & Discovery
 1. Use httpcraft_list_apis to discover available APIs
-2. Use httpcraft_list_endpoints to see available endpoints for an API
+2. Use httpcraft_list_endpoints to see available endpoints for an API  
 3. Use httpcraft_describe_endpoint to understand endpoint requirements and parameters
 4. Execute the endpoint with appropriate profile and variables
 
-Key concepts:
-- APIs: Pre-configured service definitions with base URLs, authentication, and endpoint definitions
-- Endpoints: Specific API operations (GET /users, POST /orders, etc.) with defined parameters
-- Profiles: Environment-specific configurations containing authentication credentials, base URLs, timeouts, and default headers
-- Variables: Dynamic values that can be injected into requests (user IDs, tokens, etc.)
-- Environments: Optional environment overrides for multi-stage deployments (dev, staging, prod)
+## Parameters
+- **api**: API name from configuration (required)
+- **endpoint**: Endpoint name to execute (required)  
+- **profile**: Profile containing auth/environment settings (required)
+- **variables**: Optional object to override/set dynamic values
+- **environment**: Optional environment override (dev/staging/prod)
+- **configPath**: Optional path to HTTPCraft config file
+- **timeout**: Optional request timeout in milliseconds (default: 30000)
+
+## Common Usage Examples
+
+### Basic API call:
+\`\`\`json
+{
+  "api": "github", 
+  "endpoint": "users",
+  "profile": "production"
+}
+\`\`\`
+
+### With pagination variables:
+\`\`\`json
+{
+  "api": "github",
+  "endpoint": "users", 
+  "profile": "production",
+  "variables": {
+    "pageKey": "nextPageToken123",
+    "limit": 50
+  }
+}
+\`\`\`
+
+### With dynamic user/resource IDs:
+\`\`\`json
+{
+  "api": "crm",
+  "endpoint": "user_details",
+  "profile": "dev", 
+  "variables": {
+    "userId": "12345",
+    "includeMetadata": true
+  }
+}
+\`\`\`
+
+### Environment override:
+\`\`\`json
+{
+  "api": "payment_service",
+  "endpoint": "process_payment",
+  "profile": "production",
+  "environment": "staging",
+  "variables": {
+    "amount": 100,
+    "currency": "USD"
+  }
+}
+\`\`\`
+
+## Related Tools
+- **httpcraft_list_variables**: See available variables before setting overrides
+- **httpcraft_describe_endpoint**: Check endpoint requirements and expected variables
+- **httpcraft_describe_profile**: Understand profile settings and defaults
+- **httpcraft_execute_request**: Use for ad-hoc requests without configuration
+
+## Parameter Validation & Troubleshooting
+- Variables must match those expected by the endpoint - check with httpcraft_describe_endpoint first
+- Profile must exist and be valid - verify with httpcraft_list_profiles
+- API and endpoint names are case-sensitive
+- If you get "variable not found" errors, ensure variable names match exactly what the endpoint expects
+- If authentication fails, verify the profile contains correct credentials
+- For timeout issues, increase the timeout parameter or check network connectivity
+
+## Key Concepts
+- **APIs**: Pre-configured service definitions with base URLs, authentication, and endpoint definitions
+- **Endpoints**: Specific API operations (GET /users, POST /orders, etc.) with defined parameters  
+- **Profiles**: Environment-specific configurations containing authentication credentials, base URLs, timeouts, and default headers
+- **Variables**: Dynamic values that can be injected into requests (user IDs, tokens, pagination keys, etc.)
+- **Environments**: Optional environment overrides for multi-stage deployments (dev, staging, prod)
 
 Use this over httpcraft_execute_request when you have established API configurations and want to leverage HTTPCraft's advanced features like authentication flows, variable resolution, and configuration management.`;
   public readonly inputSchema = ExecuteApiSchema;

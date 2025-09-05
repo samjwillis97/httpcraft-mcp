@@ -5,6 +5,7 @@
 
 import { z } from 'zod';
 import type { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { logger } from '../utils/logger.js';
 import type { HttpCraftCli } from '../httpcraft/cli.js';
 
@@ -151,54 +152,16 @@ export abstract class BaseTool {
   }
 
   /**
-   * Convert Zod schema to JSON Schema
+   * Convert Zod schema to JSON Schema using proper zod-to-json-schema library
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private zodToJsonSchema(schema: z.ZodSchema<any>): any {
-    // Simple conversion for basic types
-    // In a production implementation, you might want to use a library like zod-to-json-schema
-    if (schema instanceof z.ZodObject) {
-      const shape = schema.shape;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const properties: Record<string, any> = {};
-      const required: string[] = [];
-
-      for (const [key, value] of Object.entries(shape)) {
-        if (value instanceof z.ZodString) {
-          properties[key] = { type: 'string' };
-          if (value._def.description) {
-            properties[key].description = value._def.description;
-          }
-        } else if (value instanceof z.ZodNumber) {
-          properties[key] = { type: 'number' };
-          if (value._def.description) {
-            properties[key].description = value._def.description;
-          }
-        } else if (value instanceof z.ZodBoolean) {
-          properties[key] = { type: 'boolean' };
-          if (value._def.description) {
-            properties[key].description = value._def.description;
-          }
-        } else if (value instanceof z.ZodOptional) {
-          // Handle optional fields
-          continue;
-        } else {
-          properties[key] = { type: 'object' };
-        }
-
-        // Check if field is required
-        if (!(value instanceof z.ZodOptional)) {
-          required.push(key);
-        }
-      }
-
-      return {
-        type: 'object',
-        properties,
-        required,
-      };
-    }
-
-    return { type: 'object' };
+    return zodToJsonSchema(schema, {
+      name: undefined, // Don't add a $schema reference
+      target: 'openApi3', // Use OpenAPI 3.0 compatible output
+      strictUnions: true, // Be strict about union types
+      errorMessages: true, // Include error messages in schema
+      $refStrategy: 'none', // Don't use $ref references for cleaner output
+    });
   }
 }

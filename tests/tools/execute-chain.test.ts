@@ -59,7 +59,7 @@ describe('ExecuteChainTool', () => {
         'Execute a request chain using HTTPCraft with variable passing between steps'
       );
       expect(tool.description).toContain('Chains enable complex multi-step workflows');
-      expect(tool.description).toContain('Chain capabilities:');
+      expect(tool.description).toContain('## Chain Capabilities');
       expect(tool.inputSchema).toBeDefined();
     });
   });

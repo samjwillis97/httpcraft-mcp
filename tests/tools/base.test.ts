@@ -72,6 +72,7 @@ describe('BaseTool', () => {
         description: 'A test tool for unit testing',
         inputSchema: {
           type: 'object',
+          additionalProperties: false,
           properties: {
             required_field: {
               type: 'string',
@@ -84,6 +85,10 @@ describe('BaseTool', () => {
             boolean_field: {
               type: 'boolean',
               description: 'A boolean field',
+            },
+            optional_field: {
+              type: 'string',
+              description: 'An optional string field',
             },
           },
           required: ['required_field', 'number_field', 'boolean_field'],
@@ -356,6 +361,7 @@ describe('BaseTool', () => {
 
       expect(result).toEqual({
         type: 'object',
+        additionalProperties: false,
         properties: {
           stringField: {
             type: 'string',
@@ -368,6 +374,10 @@ describe('BaseTool', () => {
           booleanField: {
             type: 'boolean',
             description: 'A boolean field',
+          },
+          optionalField: {
+            type: 'string',
+            description: 'An optional field',
           },
         },
         required: ['stringField', 'numberField', 'booleanField'],
@@ -388,7 +398,7 @@ describe('BaseTool', () => {
 
       const result = tool['zodToJsonSchema'](schema);
 
-      expect(result).toEqual({ type: 'object' });
+      expect(result).toEqual({ type: 'string' });
     });
   });
 });

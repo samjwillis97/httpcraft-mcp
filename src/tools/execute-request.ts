@@ -22,14 +22,101 @@ export class ExecuteRequestTool extends BaseTool {
 
 Use this tool for ad-hoc HTTP requests, debugging, testing one-off endpoints, or when you don't have pre-configured API definitions. This provides direct control over all request parameters while still benefiting from HTTPCraft's response parsing and error handling.
 
-Common use cases:
+## Parameters
+- **method**: HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS) (required)
+- **url**: Complete target URL including protocol (required)
+- **headers**: Optional HTTP headers as key-value pairs
+- **body**: Optional request body content for POST/PUT/PATCH methods
+- **profile**: Optional profile for authentication and default settings
+- **variables**: Optional object for dynamic request parameters
+- **configPath**: Optional path to HTTPCraft config file (required if using profiles/variables)
+- **timeout**: Optional request timeout in milliseconds (default: 30000)
+- **followRedirects**: Optional boolean to follow HTTP redirects (default: true)
+- **maxRedirects**: Optional maximum number of redirects to follow (default: 5)
+
+## Common Usage Examples
+
+### Simple GET request:
+\`\`\`json
+{
+  "method": "GET",
+  "url": "https://api.github.com/users/octocat"
+}
+\`\`\`
+
+### POST with JSON body:
+\`\`\`json
+{
+  "method": "POST", 
+  "url": "https://httpbin.org/post",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer your_token"
+  },
+  "body": "{\\"name\\": \\"test\\", \\"value\\": 123}"
+}
+\`\`\`
+
+### Using profile for authentication:
+\`\`\`json
+{
+  "method": "GET",
+  "url": "https://api.myservice.com/data",
+  "profile": "production",
+  "configPath": "/path/to/httpcraft.yml"
+}
+\`\`\`
+
+### With variables for dynamic content:
+\`\`\`json
+{
+  "method": "POST",
+  "url": "https://api.service.com/users/{{userId}}/update",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": "{\\"status\\": \\"{{newStatus}\\"}",
+  "variables": {
+    "userId": "12345",
+    "newStatus": "active"
+  }
+}
+\`\`\`
+
+### Testing with custom redirect handling:
+\`\`\`json
+{
+  "method": "GET",
+  "url": "https://httpbin.org/redirect/3",
+  "followRedirects": true,
+  "maxRedirects": 5,
+  "timeout": 10000
+}
+\`\`\`
+
+## Related Tools
+- **httpcraft_execute_api**: Use for pre-configured API endpoints with better management
+- **httpcraft_list_profiles**: See available profiles for authentication
+- **httpcraft_list_variables**: Check available variables if using profiles
+
+## Parameter Validation & Troubleshooting
+- URL must be complete and valid (include http:// or https://)
+- Content-Type header should match your body content (application/json, text/plain, etc.)
+- If using profiles, ensure configPath points to valid HTTPCraft configuration
+- Variables use HTTPCraft templating syntax: {{variableName}}
+- For authentication issues, verify your headers or profile credentials
+- If requests timeout, increase the timeout parameter or check network connectivity
+- For redirect issues, adjust followRedirects and maxRedirects settings
+
+## Common Use Cases
 - Testing new API endpoints before adding them to configuration
-- Making one-off requests with custom headers or authentication
+- Making one-off requests with custom headers or authentication  
 - Debugging API responses with full request control
 - Testing external APIs without creating formal configurations
 - Quick API exploration and validation
+- Load testing with specific request parameters
 
-Features:
+## Features
 - Full HTTP method support (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)
 - Custom headers and request body
 - Optional profile integration for authentication and default settings

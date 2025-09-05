@@ -59,7 +59,7 @@ describe('ExecuteRequestTool', () => {
         'Execute a standalone HTTP request using HTTPCraft with full control over method, URL, headers, and body'
       );
       expect(tool.description).toContain('Use this tool for ad-hoc HTTP requests');
-      expect(tool.description).toContain('Common use cases:');
+      expect(tool.description).toContain('## Common Use Cases');
       expect(tool.inputSchema).toBeDefined();
     });
   });

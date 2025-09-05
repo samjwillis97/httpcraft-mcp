@@ -28,33 +28,101 @@ export class ExecuteChainTool extends BaseTool {
 
 Chains enable complex multi-step workflows where requests depend on previous responses. Perfect for authentication flows, multi-step API operations, and testing complete user journeys that require sequential API calls.
 
-Chain capabilities:
-- Sequential request execution with automatic variable extraction
-- Pass data between requests (auth tokens, IDs, computed values)
-- Handle dependent API calls automatically
-- Aggregate results from multiple requests
-- Optional parallel execution for independent steps
-- Fail-fast or continue-on-error execution modes
+## Parameters
+- **chain**: Name of the request chain to execute (required)
+- **profile**: Optional profile for authentication and environment settings
+- **environment**: Optional environment override (dev, staging, prod)
+- **variables**: Optional initial variables for the chain execution
+- **configPath**: Optional path to HTTPCraft config file containing the chain
+- **timeout**: Optional total timeout for entire chain in milliseconds (default: 60000)
+- **stopOnFailure**: Optional boolean to stop chain on first failure (default: true)
+- **parallel**: Optional boolean to execute independent steps in parallel (default: false)
 
-Common workflow patterns:
-- Authentication flow: login → get token → use token for API calls
-- Resource creation: create resource → get ID → perform operations on resource
-- Data pipeline: fetch data → transform → POST to another service
-- Integration testing: setup → execute tests → cleanup
+## Common Usage Examples
 
-Chain configuration:
-- Chains are defined in HTTPCraft configuration files
-- Each step can reference variables from previous steps
-- Variable extraction uses JSONPath or custom extractors
-- Error handling can be configured per step or globally
+### Basic authentication chain:
+\`\`\`json
+{
+  "chain": "auth_flow",
+  "profile": "production"
+}
+\`\`\`
 
-Performance considerations:
-- Chain execution typically takes longer than single requests
-- Use timeout parameter for complex chains (default: 60 seconds)
-- Consider parallel execution for independent operations
-- Use stopOnFailure=true to halt on first error for fail-fast behavior
+### Multi-step with initial variables:
+\`\`\`json
+{
+  "chain": "user_onboarding",
+  "profile": "dev",
+  "variables": {
+    "email": "user@example.com",
+    "companyId": "acme-corp"
+  }
+}
+\`\`\`
 
-Use httpcraft_list_chains to discover available chains, or httpcraft_describe_chain for detailed chain configuration.`;
+### Parallel execution for performance:
+\`\`\`json
+{
+  "chain": "data_aggregation",
+  "profile": "production",
+  "parallel": true,
+  "timeout": 120000
+}
+\`\`\`
+
+### Continue on failures for testing:
+\`\`\`json
+{
+  "chain": "comprehensive_test",
+  "profile": "staging",
+  "stopOnFailure": false,
+  "variables": {
+    "testMode": true
+  }
+}
+\`\`\`
+
+### Environment-specific chain:
+\`\`\`json
+{
+  "chain": "deployment_check",
+  "profile": "ops",
+  "environment": "production",
+  "timeout": 300000
+}
+\`\`\`
+
+## Related Tools
+- **httpcraft_list_chains**: Discover available chains in configuration
+- **httpcraft_describe_chain**: Get detailed chain definition and steps
+- **httpcraft_execute_api**: Execute individual API endpoints used in chains
+- **httpcraft_list_variables**: See available variables for chain initialization
+
+## Parameter Validation & Troubleshooting
+- Chain must exist in HTTPCraft configuration - check with httpcraft_list_chains
+- If using profiles, ensure they contain necessary authentication for all chain steps
+- Variables should match those expected by chain steps
+- For timeout issues, increase the timeout parameter (chains typically need longer timeouts than single requests)
+- If parallel execution fails, try with parallel=false to debug step dependencies
+- For authentication failures in chains, verify all steps have access to required credentials
+- When stopOnFailure=false, check individual step results in the response
+
+## Chain Capabilities
+- **Sequential execution**: Requests run in order with automatic variable extraction
+- **Variable passing**: Pass data between requests (auth tokens, IDs, computed values)
+- **Dependent calls**: Handle API calls that depend on previous responses automatically
+- **Result aggregation**: Combine results from multiple requests
+- **Parallel execution**: Optional parallel execution for independent steps (set parallel=true)
+- **Error handling**: Fail-fast or continue-on-error execution modes (controlled by stopOnFailure)
+
+## Common Workflow Patterns
+- **Authentication flow**: login → get token → use token for API calls
+- **Data collection**: fetch user → get permissions → collect user data
+- **Order processing**: create order → process payment → send confirmation → update inventory
+- **Testing workflows**: setup test data → run tests → cleanup
+- **Batch operations**: process multiple items with dependencies
+
+Use chains when you need coordinated multi-step operations that depend on previous responses. For simple single requests, use httpcraft_execute_api or httpcraft_execute_request instead.`;
   public readonly inputSchema = ExecuteChainSchema;
 
   constructor(httpcraft: HttpCraftCli) {
