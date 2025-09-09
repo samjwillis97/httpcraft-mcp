@@ -40,7 +40,7 @@ export const ConfigPathSchema = z
 
 // Environment variables
 export const VariablesSchema = z
-  .record(z.any())
+  .record(z.string(), z.unknown())
   .optional()
   .describe(
     'Variable overrides as key-value pairs. Variables can be referenced in URLs, headers, and body using HTTPCraft templating syntax. These override variables defined in configuration files'
@@ -309,7 +309,7 @@ export const HttpCraftResponseSchema = z.object({
   statusCode: z.number().optional(),
   statusText: z.string().optional(),
   headers: z.record(z.string()).optional(),
-  data: z.any().optional(),
+  data: z.unknown().optional(),
   error: z.string().optional(),
   isBinary: z.boolean().optional(),
   contentType: z.string().optional(),
@@ -350,7 +350,7 @@ export const ChainResponseSchema = z.object({
 
 export const DiscoveryResponseSchema = z.object({
   success: z.boolean(),
-  data: z.any(),
+  data: z.unknown(),
   error: z.string().optional(),
 });
 

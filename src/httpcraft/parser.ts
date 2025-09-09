@@ -35,9 +35,9 @@ const HttpCraftJsonOutputSchema = z.union([
     statusCode: z.number().nullable().optional(),
     statusText: z.string().optional(),
     headers: z.record(z.string()).optional(),
-    body: z.any().optional(),
-    data: z.any().optional(),
-    response: z.any().optional(),
+    body: z.unknown().optional(),
+    data: z.unknown().optional(),
+    response: z.unknown().optional(),
     isBinary: z.boolean().optional(),
     contentType: z.string().optional(),
     contentLength: z.number().optional(),
@@ -61,7 +61,7 @@ const HttpCraftJsonOutputSchema = z.union([
   // API response format
   z.object({
     status: z.union([z.literal('success'), z.literal('error')]),
-    data: z.any().optional(),
+    data: z.unknown().optional(),
     error: z.string().optional(),
     meta: z
       .object({

@@ -152,16 +152,77 @@ export abstract class BaseTool {
   }
 
   /**
-   * Convert Zod schema to JSON Schema using proper zod-to-json-schema library
+   * Convert Zod schema to JSON Schema Draft 2020-12 compatible format
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private zodToJsonSchema(schema: z.ZodSchema<any>): any {
-    return zodToJsonSchema(schema, {
+    const jsonSchema = zodToJsonSchema(schema, {
       name: undefined, // Don't add a $schema reference
-      target: 'openApi3', // Use OpenAPI 3.0 compatible output
-      strictUnions: true, // Be strict about union types
-      errorMessages: true, // Include error messages in schema
-      $refStrategy: 'none', // Don't use $ref references for cleaner output
+      target: 'jsonSchema7', // Use JSON Schema Draft 7 for maximum compatibility
+      strictUnions: false, // Be less strict about union types for compatibility
+      errorMessages: false, // Don't include custom error messages
+      $refStrategy: 'none', // Don't use $ref references
+      removeAdditionalStrategy: 'passthrough', // Allow additional properties
+      definitionPath: 'definitions', // Use standard definitions path
     });
+
+    // Clean up problematic patterns that aren't compatible with MCP
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cleanSchema = this.cleanJsonSchema(jsonSchema as any);
+
+    // Remove $schema property if it exists (not needed for MCP)
+    if (cleanSchema && typeof cleanSchema === 'object' && cleanSchema.$schema) {
+      delete cleanSchema.$schema;
+    }
+
+    return cleanSchema;
+  }
+
+  /**
+   * Clean JSON Schema to ensure MCP compatibility
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private cleanJsonSchema(schema: any): any {
+    if (!schema || typeof schema !== 'object') {
+      return schema;
+    }
+
+    // Handle anyOf with "not": {} pattern (common with optional schemas)
+    if (schema.anyOf && Array.isArray(schema.anyOf)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const cleanedAnyOf = schema.anyOf.filter((item: any) => {
+        // Remove the problematic "not": {} pattern
+        return !(item.not && Object.keys(item.not).length === 0);
+      });
+
+      // If we only have one option left, unwrap it
+      if (cleanedAnyOf.length === 1) {
+        return this.cleanJsonSchema(cleanedAnyOf[0]);
+      } else if (cleanedAnyOf.length > 1) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        schema.anyOf = cleanedAnyOf.map((item: any) => this.cleanJsonSchema(item));
+      } else {
+        // If all options were removed, return a permissive object schema
+        return { type: 'object', additionalProperties: true };
+      }
+    }
+
+    // Recursively clean nested schemas
+    for (const [key, value] of Object.entries(schema)) {
+      if (value && typeof value === 'object') {
+        if (Array.isArray(value)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          schema[key] = value.map((item: any) => this.cleanJsonSchema(item));
+        } else {
+          schema[key] = this.cleanJsonSchema(value);
+        }
+      }
+    }
+    // Ensure object schemas have the type property
+    if (schema.properties && !schema.type) {
+      schema.type = 'object';
+    }
+
+    return schema;
   }
 }
